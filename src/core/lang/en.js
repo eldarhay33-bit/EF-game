@@ -1,0 +1,102 @@
+// English (default language) — master dictionary. Every other language falls back to these keys.
+I18n.dict.en = {
+  // loading / pause / end
+  'load.textures': 'Creating textures', 'load.world': 'Building sky and terrain', 'load.structures': 'Building structures', 'load.nature': 'Planting trees and grass', 'load.fx': 'Preparing effects and interface', 'load.ready': 'Ready!',
+  'pause.title': 'Paused', 'pause.resume': 'Resume', 'pause.settings': 'Settings', 'pause.quit': 'Back to lobby', 'pause.confirm': 'Leave the match and go back to the lobby?',
+  'end.win': 'Victory! You are the last one standing', 'end.lose': 'Eliminated', 'end.stats': 'Place {rank} of {total} · {kills} kills', 'end.by': ' · eliminated by {name}', 'end.again': 'Play again', 'end.lobby': 'Back to lobby',
+  'end.rewards': 'Rewards', 'end.coins': 'Coins', 'end.points': 'Points', 'end.xp': 'XP',
+  // HUD
+  'hud.alive': 'alive', 'hud.kills': 'kills', 'hud.fpp': 'First person', 'hud.tpp': 'Third person', 'hud.out': 'OUT OF THE STORM ZONE!', 'hud.final': 'Final zone', 'hud.pre': 'Pre-match', 'hud.hidden': 'Hidden in tall grass',
+  'zone.wait': 'Zone {n} · shrinks in {t}', 'zone.shrink': 'Zone {n} · shrinking {t}', 'zone.announce': 'Zone {n}: shrinks in {s} seconds', 'zone.shrinking': 'The storm is closing in! Move inside',
+  'hud.plane': 'You are on the plane! Press {k} to jump', 'hud.freefall': 'Free fall! Press {k} to open the parachute', 'hud.chute': 'Parachute open',
+  'hud.cons': 'Heal {a}/{b} · Shield {c}/{d} · Grenades {e}/{f}/{g}/{h}',
+  'hud.healSmall': 'Bandage', 'hud.healBig': 'Medkit',
+  'use.health': 'Health', 'use.shield': 'Shield', 'msg.healing': 'Bandaging...', 'msg.kit': 'Using medkit...', 'msg.shieldDrink': 'Drinking shield potion...',
+  'prompt.jump': '[{k}] Jump from the plane', 'prompt.glide': '[{k}] Open parachute', 'prompt.dismount': '[{k}] Get off the bike', 'prompt.mount': '[{k}] Ride {name}', 'prompt.pick': '[{k}] {item}',
+  'msg.ammoFull': 'Ammo is full', 'msg.exotic': '!!! EXOTIC WEAPON: Phantom-X !!!', 'feed.exotic': 'You found the Phantom-X — 1 in 10,000',
+  'bike.help': '{name} — {keys}', 'bike.keys': 'move to ride, handbrake {hand}', 'bike.boost': ', boost {boost}',
+  'feed.killedBy': '{a} eliminated you', 'feed.storm': 'The storm eliminated you', 'feed.kill': '{a} eliminated {v}', 'feed.stormKill': '{v} fell to the storm', 'feed.supply': 'Supply drop incoming — epic and legendary loot',
+  'banner.supply': 'A supply drop is landing in the safe zone!', 'weapon.fist': 'No weapon', 'hud.reloading': 'Reloading',
+  'hint.steer': 'Mouse capture is not available here: move the cursor away from the centre to turn. Arrow keys also turn. Esc = pause.',
+  'hint.click': 'Click the game to capture the mouse', 'feed.stormShort': 'the storm', 'feed.bike': 'Bike', 'hud.closeMap': 'Press M to close the map',
+  // names bound onto the data tables
+  'weapon.pistol': 'M9 Pistol', 'weapon.revolver': 'Magnum .44', 'weapon.smg': 'SMG', 'weapon.ar': 'AR Assault Rifle', 'weapon.ak': 'AK Rifle', 'weapon.dmr': 'DMR Marksman', 'weapon.shotgun': 'Pump Shotgun', 'weapon.autoshotgun': 'Auto Shotgun', 'weapon.minigun': 'Minigun', 'weapon.sniper': 'Bolt Sniper', 'weapon.rpg': 'RPG', 'weapon.special': 'Phantom-X Rail Sniper',
+  'wmode.pistol': 'Semi-auto', 'wmode.revolver': 'Heavy', 'wmode.smg': 'Full-auto', 'wmode.ar': 'Full-auto', 'wmode.ak': 'Full-auto', 'wmode.dmr': 'Semi-auto', 'wmode.shotgun': 'Pump action', 'wmode.autoshotgun': 'Full-auto', 'wmode.minigun': 'Spin-up', 'wmode.sniper': 'Bolt action', 'wmode.rpg': 'Rocket', 'wmode.special': 'Quantum charge',
+  'rarity.0': 'Common', 'rarity.1': 'Uncommon', 'rarity.2': 'Rare', 'rarity.3': 'Epic', 'rarity.4': 'Legendary', 'rarity.5': 'Exotic', 'rarity.6': 'ULTRA MAX',
+  'sight.iron': 'Iron sights', 'sight.reddot': 'Red dot', 'sight.holo': 'Holographic', 'sight.x2': 'Scope x2', 'sight.x4': 'Scope x4', 'sight.x6': 'Scope x6', 'sight.x8': 'Scope x8', 'sight.x12': 'Scope x12', 'sight.thermal': 'Thermal',
+  'ammo.light': '9mm rounds', 'ammo.medium': '5.56 rounds', 'ammo.shells': 'Shotgun shells', 'ammo.heavy': '.50 rounds', 'ammo.rocket': 'Rockets',
+  'throw.frag': 'Frag grenade', 'throw.smoke': 'Smoke grenade', 'throw.flash': 'Flashbang', 'throw.sticky': 'Sticky bomb',
+  'bike.scooter': 'Dirt scooter', 'bike.sport': 'Sport bike', 'bike.raider': 'Armored raider', 'bike.hyper': 'Hyper bike',
+  'diff.easy': 'Easy', 'diff.normal': 'Normal', 'diff.hard': 'Hard', 'diff.insane': 'Insane',
+  'tod.day': 'Bright day', 'tod.golden': 'Sunset', 'tod.overcast': 'Overcast', 'tod.night': 'Night',
+  'poi.0': 'Fortress', 'poi.1': 'Mountain', 'poi.2': 'Village', 'poi.3': 'Factory', 'poi.4': 'Lake', 'poi.5': 'Farm', 'poi.6': 'Outpost', 'poi.7': 'Temple', 'poi.8': 'Derrick', 'poi.9': 'Crash site',
+  'item.heal.small': 'Bandage', 'item.heal.big': 'Medkit', 'item.shield.small': 'Shield potion', 'item.shield.big': 'Big shield potion',
+
+  // skins
+  'skin.woodland': 'Woodland Ranger', 'skin.desert': 'Desert Scout', 'skin.arctic': 'Arctic Wolf', 'skin.urban': 'Urban Operative', 'skin.digital': 'Digital Archer', 'skin.tiger': 'Tiger Brute', 'skin.ghillie': 'Ghillie Ghost', 'skin.blackops': 'Black Ops',
+  'skin.crimson': 'Crimson Warlord', 'skin.cyber': 'Cyber Ronin', 'skin.samurai': 'Ronin Samurai', 'skin.astro': 'Astro Pilot', 'skin.reaper': 'The Reaper', 'skin.phantom': 'Phantom Angel', 'skin.gold': 'Golden Emperor', 'skin.dragon': 'Dragon Lord', 'skin.ultra': 'ULTRA MAX',
+
+  // lobby navigation, wallet
+  'tab.play': 'Play', 'tab.locker': 'Locker', 'tab.shop': 'Shop', 'tab.challenges': 'Challenges', 'tab.board': 'Top 100', 'tab.friends': 'Friends', 'tab.controls': 'Controls', 'tab.settings': 'Settings',
+  'wallet.coins': 'Coins', 'wallet.points': 'Points', 'wallet.lvl': 'LVL', 'profile.stats': '{g} games · {w} wins · {k} kills', 'ui.close': 'Close',
+  // play tab
+  'play.mode': 'Game mode', 'play.diff': 'Bot difficulty', 'play.view': 'Camera', 'play.map': 'Map', 'play.preview': 'Island map', 'play.daily': 'Daily missions', 'play.start': 'PLAY', 'play.online': 'PLAY WITH FRIENDS', 'play.tutorial': 'Tutorial',
+  'play.hint': 'Tip: crouch in tall grass to hide from bots. Swim across the sea to dodge the storm.', 'play.mapHint': 'Mountains rise to the north, the open sea lies to the south.', 'play.duelHint': 'Duels use a small flat arena: same weapons for both, no equipment bonuses.',
+  'mode.br': 'Battle Royale', 'mode.br.d': '20 players, shrinking storm, last one standing wins', 'mode.duel': '1v1 Duel', 'mode.duel.d': 'Best of three rounds in a special arena', 'mode.online': 'Play with friends', 'mode.online.d': 'Duo, trio, squad or 1v1 with friends online',
+  'view.fpp': 'First person', 'view.tpp': 'Third person',
+  'map.classic': 'Classic Island', 'map.classic.d': 'Mountains, desert, a lake and the open sea', 'map.winter': 'Winter Island', 'map.winter.d': 'Snow covers everything under grey skies', 'map.night': 'Night Raid', 'map.night.d': 'Moonlit island, your headlamp lights the way',
+  'map.colosseum': 'Colosseum', 'map.colosseum.d': 'Sandstone arena with pillars and a central dais', 'map.ruins': 'Sunset Ruins', 'map.ruins.d': 'Overgrown temple at golden hour', 'map.neon': 'Neon Grid', 'map.neon.d': 'Glowing sci-fi arena at night',
+  // controls tab
+  'ctl.kbm': 'Keyboard + mouse', 'ctl.xbox': 'Xbox controller', 'ctl.ps': 'PlayStation controller', 'ctl.touch': 'Touch screen', 'ctl.mouse': 'Mouse', 'ctl.drag': 'Drag right side',
+  'ctl.kbmNote': 'If the mouse cannot be captured, move the cursor away from the centre to turn, or use the arrow keys.', 'ctl.padNote': 'Plug in a controller and press any button. Menus can be used with the D-Pad, A to select, B to go back, LB/RB to change tab.', 'ctl.touchNote': 'Left side: move. Right side: look. Tap the on-screen buttons.',
+  'ctl.move': 'Move', 'ctl.look': 'Look', 'ctl.fire': 'Fire', 'ctl.aim': 'Aim down sights', 'ctl.jump': 'Jump / glide', 'ctl.crouch': 'Crouch / slide', 'ctl.sprint': 'Sprint', 'ctl.reload': 'Reload', 'ctl.interact': 'Pick up / ride', 'ctl.slots': 'Weapon slots',
+  'ctl.nade': 'Grenade', 'ctl.heal': 'Heal', 'ctl.shield': 'Shield potion', 'ctl.view': 'Switch camera', 'ctl.map': 'Map', 'ctl.pause': 'Pause',
+  // settings tab
+  'set.title': 'Settings', 'set.name': 'Player name', 'set.lang': 'Language', 'set.quality': 'Graphics quality', 'set.auto': 'Auto', 'set.low': 'Low', 'set.med': 'Medium', 'set.high': 'High', 'set.fov': 'Field of view', 'set.sens': 'Mouse sensitivity', 'set.volume': 'Volume',
+  'set.bob': 'Head bob', 'set.lookMode': 'Mouse look', 'set.lock': 'Capture mouse', 'set.steer': 'Cursor steering', 'set.steerSpeed': 'Steering speed', 'set.invert': 'Invert vertical look', 'set.padSens': 'Controller sensitivity', 'set.vibration': 'Controller vibration',
+  'set.autoSprint': 'Auto sprint (controller / touch)', 'set.touch': 'Touch controls', 'set.on': 'On', 'set.off': 'Off', 'set.touchSize': 'Touch button size', 'set.fps': 'Show FPS', 'set.special': 'Phantom-X drop rate', 'set.specialReal': 'Real (1 in 10,000)', 'set.specialEvent': 'Event (1 in 60)', 'set.specialTest': 'Test (always)',
+  'set.progress': 'Progress', 'set.reset': 'Reset progress', 'set.resetConfirm': 'Delete all coins, skins and achievements and start over?', 'set.note': 'Settings and progress are saved in this browser.',
+  // locker / shop
+  'locker.skins': 'Your skins', 'locker.gear': 'Equipment', 'locker.starter': 'Starting weapon', 'locker.none': 'Nothing equipped',
+  'equip.vest': 'Vest', 'equip.helmet': 'Helmet', 'equip.boots': 'Boots', 'equip.gloves': 'Gloves', 'equip.pack': 'Supply pack',
+  'eff.vest': '+{n} shield, -{p}% damage taken', 'eff.helmet': '-{p}% headshot damage', 'eff.boots': '+{p}% speed, -{q}% footstep noise', 'eff.gloves': '-{p}% reload time', 'eff.pack': 'Start with {a} bandages, {b} shield potions, {c} grenades',
+  'shop.skins': 'Skins', 'shop.gear': 'Equipment', 'shop.weapons': 'Starter weapons', 'shop.maps': 'Special maps', 'shop.owned': 'Owned', 'shop.bought': 'Purchased!', 'shop.needCoins': 'Not enough coins', 'shop.ultraReq': 'Requires a Legendary skin', 'shop.wallet': 'Your coins', 'shop.earn': 'Earn coins by playing matches, completing missions and unlocking achievements.',
+  'shop.starterDesc': 'Start every battle with this weapon', 'shop.duelMap': '1v1 arena', 'shop.brMap': 'Battle royale island', 'shop.ultraDesc': 'The ultimate skin: obsidian armour, molten gold and black wings. Shows your total points on its chest plate.', 'shop.ultraPts': 'Top 100 ULTRA MAX players are listed on the global board.',
+  // challenges
+  'ch.daily': 'Daily missions', 'ch.weekly': 'Weekly missions', 'ch.ach': 'Achievements', 'ch.f.all': 'All', 'ch.f.special': 'Special', 'ch.f.done': 'Completed', 'ch.progress': '{a} of {b} tiers · {p} points',
+  'toast.mission': 'Mission complete', 'toast.ach': '+{pts} points · +{coins} coins', 'toast.level': 'Level {n}!', 'toast.levelSub': 'Keep playing to level up',
+  'mission.kills': 'Eliminate {n} opponents', 'mission.wins': 'Win {n} matches', 'mission.play': 'Play {n} matches', 'mission.headshots': 'Get {n} headshot eliminations', 'mission.explosive': 'Eliminate {n} opponents with explosives', 'mission.bike': 'Run over {n} opponents with a bike',
+  'mission.survive': 'Survive {n} seconds in a match', 'mission.grass': 'Hide crouched in tall grass for {n} seconds', 'mission.swim': 'Swim {n} metres', 'mission.supply': 'Loot {n} supply drops', 'mission.damage': 'Deal {n} damage', 'mission.duel': 'Win {n} duels',
+  'ach.wins.n': 'Champion', 'ach.wins.d': 'Win {n} matches', 'ach.streak.n': 'Unstoppable', 'ach.streak.d': 'Win {n} matches in a row', 'ach.kills.n': 'Hunter', 'ach.kills.d': 'Eliminate {n} opponents in total',
+  'ach.matchKills.n': 'Rampage', 'ach.matchKills.d': 'Eliminate {n} opponents in a single match', 'ach.headshots.n': 'Sharpshooter', 'ach.headshots.d': 'Get {n} headshot eliminations', 'ach.longShot.n': 'Eagle Eye', 'ach.longShot.d': 'Eliminate someone from {n} metres away',
+  'ach.duelInsane.n': 'Duelist Supreme', 'ach.duelInsane.d': 'Win {n} duels on Insane difficulty', 'ach.duelWins.n': 'Arena Fighter', 'ach.duelWins.d': 'Win {n} duels', 'ach.bike.n': 'Road Rage', 'ach.bike.d': 'Run over {n} opponents with a bike',
+  'ach.explosive.n': 'Demolition', 'ach.explosive.d': 'Eliminate {n} opponents with explosives', 'ach.multi.n': 'Multi-kill', 'ach.multi.d': 'Eliminate {n} opponents within 6 seconds', 'ach.survive.n': 'Survivor', 'ach.survive.d': 'Survive {n} seconds in a single match',
+  'ach.games.n': 'Veteran', 'ach.games.d': 'Play {n} matches', 'ach.swim.n': 'Swimmer', 'ach.swim.d': 'Swim {n} metres in the sea or the lake', 'ach.grass.n': 'Ghost in the Grass', 'ach.grass.d': 'Stay hidden crouching in tall grass for {n} seconds',
+  'ach.supply.n': 'Supply Raider', 'ach.supply.d': 'Loot {n} supply drops', 'ach.flawless.n': 'Untouchable', 'ach.flawless.d': 'Win {n} matches without taking any damage', 'ach.pistolWin.n': 'Pistol Only', 'ach.pistolWin.d': 'Win {n} matches using only the pistol',
+  'ach.ultraWins.n': 'ULTRA Champion', 'ach.ultraWins.d': 'Win {n} matches wearing the ULTRA MAX skin', 'ach.exotic.n': 'One in Ten Thousand', 'ach.exotic.d': 'Find the exotic Phantom-X rail sniper', 'ach.damage.n': 'Heavy Hitter', 'ach.damage.d': 'Deal {n} damage in total',
+  'ach.insaneKills.n': 'Nerves of Steel', 'ach.insaneKills.d': 'Eliminate {n} opponents on Insane difficulty', 'ach.ghost.n': 'Silent Winner', 'ach.ghost.d': 'Win {n} matches without firing a single shot', 'ach.distance.n': 'Marathon', 'ach.distance.d': 'Travel {n} metres on foot',
+  // leaderboard
+  'board.title': 'ULTRA MAX Top 100', 'board.desc': 'Only players wearing the ULTRA MAX skin can enter. Points come mostly from special achievements.', 'board.loading': 'Loading the board...', 'board.online': 'Global board', 'board.offline': 'Offline board (this device only). Set an online server in the Friends tab to share it.',
+  'board.empty': 'Nobody is on the board yet — be the first!', 'board.player': 'Player', 'board.pts': 'Points', 'board.you': 'Your entry', 'board.ready': 'You are wearing ULTRA MAX. Your points are submitted after every match.', 'board.equip': 'You own ULTRA MAX. Equip it in the Locker to enter the board.', 'board.need': 'Buy the ULTRA MAX skin in the shop to enter the board.',
+  'board.submit': 'Submit my points', 'board.sent': 'Points submitted', 'board.fail': 'Could not reach the server', 'board.how': 'How to earn points', 'board.howText': 'Win matches, finish missions and above all unlock special achievements: win streaks, huge kill counts, insane duels, and more.',
+  // duel + tutorial
+  'duel.info': 'Duel · round {r} · {a} - {b}', 'duel.round': 'Round {n}', 'duel.go': 'FIGHT!', 'duel.won': 'Round won', 'duel.lost': 'Round lost', 'duel.victory': 'Duel won!', 'duel.defeat': 'Duel lost', 'duel.final': 'Final score {a} - {b} · {d}',
+  'tut.title': 'Tutorial', 'tut.step': 'Step {n} of {m}', 'tut.skip': 'Tap here to skip {k}', 'tut.done': 'Tutorial complete!', 'tut.doneSub': 'You are ready for the island. Reward added to your wallet.', 'tut.respawn': 'Try again — you got back up',
+  'tut.t.look': 'Look around', 'tut.t.move': 'Move', 'tut.t.sprint': 'Sprint', 'tut.t.jump': 'Jump', 'tut.t.crouch': 'Crouch', 'tut.t.pickup': 'Pick up a weapon', 'tut.t.slots': 'Switch weapons', 'tut.t.aim': 'Aim down sights', 'tut.t.shoot': 'Shoot the targets',
+  'tut.t.reload': 'Reload', 'tut.t.heal': 'Heal', 'tut.t.nade': 'Throw a grenade', 'tut.t.grass': 'Tall grass', 'tut.t.fight': 'Sparring match',
+  'tut.look.kbm': 'Move the mouse (or press the arrow keys) to turn the camera', 'tut.look.pad': 'Use the right stick to look around', 'tut.look.touch': 'Drag your finger on the right half of the screen',
+  'tut.move.kbm': 'Walk forward with W A S D', 'tut.move.pad': 'Use the left stick to walk', 'tut.move.touch': 'Hold your thumb on the left half and drag',
+  'tut.sprint.kbm': 'Hold {k} while moving forward', 'tut.sprint.pad': 'Push the left stick fully forward or click it ({k})', 'tut.sprint.touch': 'Push the joystick all the way up',
+  'tut.jump': 'Press {k} to jump', 'tut.crouch': 'Press {k} to crouch (standing still while crouched makes you harder to spot)', 'tut.pickup': 'Walk to the glowing rifle and press {k} to pick it up',
+  'tut.slots.kbm': 'Press 1, 2, 3 or scroll the wheel to switch weapons', 'tut.slots.pad': 'Use LB / RB to change weapon', 'tut.slots.touch': 'Tap a number button at the right edge',
+  'tut.aim': 'Hold {k} to aim down the sights', 'tut.shoot': 'Press {k} to fire. Hit {n} more targets', 'tut.reload': 'Your magazine is nearly empty. Press {k} to reload', 'tut.heal': 'You are hurt. Press {k} to use a bandage',
+  'tut.nade': 'Press {k} to throw a frag grenade — stay clear of the blast', 'tut.grass': 'Out on the island, crouch inside tall grass to disappear from bot vision. Moving or firing gives you away.', 'tut.fight': 'Defeat the sparring bot to finish the tutorial',
+  // friends / online
+  'friends.title': 'Friends and parties', 'friends.you': 'Your online name', 'friends.name': 'Username', 'friends.status': 'Connection', 'friends.connect': 'Go online', 'friends.connecting': 'Connecting...', 'friends.offlineMode': 'Offline', 'friends.onlineMode': 'Online as {name}',
+  'friends.badName': "Use 3-16 letters, numbers or _ only.", 'friends.nameTaken': 'That username is already in use online. Pick another one in Settings.', 'friends.noNet': 'Could not reach the matchmaking service. Check your connection and try again.', 'friends.copy': 'Copy name', 'friends.copied': 'Copied!',
+  'friends.add': 'Add a friend', 'friends.addPh': 'Friend username', 'friends.addBtn': 'Add', 'friends.list': 'Friend list', 'friends.none': 'No friends yet. Add a friend by their username.', 'friends.invite': 'Invite', 'friends.remove': 'Remove', 'friends.online': 'Online', 'friends.away': 'Offline',
+  'friends.self': 'That is you!', 'friends.dupe': 'Already on your list', 'friends.added': 'Friend added', 'friends.inviteSent': 'Invitation sent to {name}', 'friends.noReply': '{name} is offline or did not answer',
+  'party.title': 'Your party', 'party.mode': 'Party mode', 'party.duo': 'Duo', 'party.trio': 'Trio', 'party.squad': 'Squad (4)', 'party.duel': '1v1 Duel', 'party.members': 'Members', 'party.host': 'Host', 'party.start': 'Start match', 'party.leave': 'Leave party', 'party.empty': 'Waiting for friends to join...',
+  'party.invited': '{name} invites you to play {mode}', 'party.accept': 'Accept', 'party.decline': 'Decline', 'party.joined': '{name} joined the party', 'party.left': '{name} left the party', 'party.full': 'The party is full', 'party.needMore': 'Invite at least one friend first', 'party.hostOnly': 'Only the host can start the match', 'party.map': 'Map',
+  'net.server': 'Online server for the global board (optional)', 'net.serverHint': 'Paste a Firebase Realtime Database URL to share the Top 100 board between players.', 'net.disconnected': '{name} disconnected', 'net.lost': 'Connection to the host was lost', 'net.waiting': 'Waiting for {name}...', 'net.teammate': 'Teammate'
+};

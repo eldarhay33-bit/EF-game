@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Last Squad Standing</title>
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/v3.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="loading" class="screen">
+  <h1>LAST SQUAD STANDING</h1>
+  <div id="loadText" class="sub">Loading...</div>
+  <div class="loadbar"><div id="loadFill"></div></div>
+</div>
+
+<div id="menu" class="hidden"></div>
+
+<div id="hud" class="hidden">
+  <div id="topbar">
+    <div class="pill"><span id="aliveCount">0</span> <em data-i18n="hud.alive">alive</em></div>
+    <div class="pill"><span id="killCount">0</span> <em data-i18n="hud.kills">kills</em></div>
+    <div class="pill" id="zoneInfo">--</div>
+  </div>
+  <div id="compass"><div id="compassStrip"></div></div>
+  <canvas id="minimap" width="220" height="220"></canvas>
+  <div id="killfeed"></div>
+  <div id="crosshair"><i></i><i></i><i></i><i></i></div>
+  <div id="reticle"></div>
+  <div id="scope"><div class="hline"></div><div class="vline"></div></div>
+  <div id="steerHint"></div>
+  <div id="hitmarker"></div>
+  <div id="vignette"></div>
+  <div id="lowhp"></div>
+  <div id="flash"></div>
+  <div id="under"></div>
+  <div id="hidden"></div>
+  <div id="dmgInd"></div>
+  <div id="prompt"></div>
+  <div id="banner"></div>
+  <div id="tutBox"></div>
+  <div id="useBar"><div id="useFill"></div><span id="useTxt"></span></div>
+  <div id="vehicleHud"><span id="speedTxt">0</span><small>km/h</small></div>
+  <div id="fps"></div>
+  <div id="bottom">
+    <div id="slots"></div>
+    <div id="ammoBox">
+      <div><span id="ammoMag">0</span><span id="ammoRes">/ 0</span></div>
+      <div id="ammoMeta"></div>
+      <div id="consum"></div>
+    </div>
+    <div id="bars">
+      <div class="bar shield"><div id="shieldFill"></div><span id="shieldTxt">0</span></div>
+      <div class="bar health"><div id="healthFill"></div><span id="healthTxt">100</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<div id="touch" class="hidden"></div>
+
+<div id="pause" class="screen hidden">
+  <h2 data-i18n="pause.title">Paused</h2>
+  <button id="resumeBtn" data-i18n="pause.resume">Resume</button>
+  <button id="pauseSettingsBtn" class="ghost" data-i18n="pause.settings">Settings</button>
+  <button id="quitBtn" class="ghost" data-i18n="pause.quit">Back to lobby</button>
+</div>
+
+<div id="endScreen" class="screen hidden">
+  <h1 id="endTitle"></h1>
+  <p id="endStats" class="sub"></p>
+  <div id="endRewards" class="rewards"></div>
+  <button id="againBtn" data-i18n="end.again">Play again</button>
+  <button id="lobbyBtn" class="ghost" data-i18n="end.lobby">Back to lobby</button>
+</div>
+
+<script type="module" src="src/boot.js"></script>
+</body>
+</html>

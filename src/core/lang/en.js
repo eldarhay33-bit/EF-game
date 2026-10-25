@@ -34,7 +34,7 @@ I18n.dict.en = {
 
   // skins
   'skin.woodland': 'Woodland Ranger', 'skin.desert': 'Desert Scout', 'skin.arctic': 'Arctic Wolf', 'skin.urban': 'Urban Operative', 'skin.digital': 'Digital Archer', 'skin.tiger': 'Tiger Brute', 'skin.ghillie': 'Ghillie Ghost', 'skin.blackops': 'Black Ops',
-  'skin.crimson': 'Crimson Warlord', 'skin.cyber': 'Cyber Ronin', 'skin.samurai': 'Ronin Samurai', 'skin.astro': 'Astro Pilot', 'skin.reaper': 'The Reaper', 'skin.phantom': 'Phantom Angel', 'skin.gold': 'Golden Emperor', 'skin.dragon': 'Dragon Lord', 'skin.ultra': 'ULTRA MAX',
+  'skin.crimson': 'Crimson Warlord', 'skin.cyber': 'Cyber Ronin', 'skin.samurai': 'Ronin Samurai', 'skin.astro': 'Astro Pilot', 'skin.reaper': 'The Reaper', 'skin.phantom': 'Phantom Angel', 'skin.gold': 'Golden Emperor', 'skin.dragon': 'Dragon Lord', 'skin.cowboy': "Cowboy Drifter", 'skin.panda': "Panda Brawler", 'skin.ninja': "Shadow Ninja", 'skin.pirate': "Pirate Captain", 'skin.viking': "Viking Raider", 'skin.pumpkin': "Pumpkin King", 'skin.robot': "Mecha Unit", 'skin.knight': "Royal Knight", 'skin.alien': "Star Visitor", 'skin.unicorn': "Rainbow Unicorn", 'skin.neon': "Neon Rider", 'skin.ghost': "Wandering Ghost", 'skin.frost': "Frost King", 'skin.magma': "Magma Lord", 'skin.celestial': "Celestial Guardian", 'skin.ultra': 'ULTRA MAX',
 
   // lobby navigation, wallet
   'tab.play': 'Play', 'tab.locker': 'Locker', 'tab.shop': 'Shop', 'tab.challenges': 'Challenges', 'tab.board': 'Top 100', 'tab.friends': 'Friends', 'tab.controls': 'Controls', 'tab.settings': 'Settings',
@@ -49,7 +49,7 @@ I18n.dict.en = {
   // controls tab
   'ctl.kbm': 'Keyboard + mouse', 'ctl.xbox': 'Xbox controller', 'ctl.ps': 'PlayStation controller', 'ctl.touch': 'Touch screen', 'ctl.mouse': 'Mouse', 'ctl.drag': 'Drag right side',
   'ctl.kbmNote': 'If the mouse cannot be captured, move the cursor away from the centre to turn, or use the arrow keys.', 'ctl.padNote': 'Plug in a controller and press any button. Menus can be used with the D-Pad, A to select, B to go back, LB/RB to change tab.', 'ctl.touchNote': 'Left side: move. Right side: look. Tap the on-screen buttons.',
-  'ctl.move': 'Move', 'ctl.look': 'Look', 'ctl.fire': 'Fire', 'ctl.aim': 'Aim down sights', 'ctl.jump': 'Jump / glide', 'ctl.crouch': 'Crouch / slide', 'ctl.sprint': 'Sprint', 'ctl.reload': 'Reload', 'ctl.interact': 'Pick up / ride', 'ctl.slots': 'Weapon slots',
+  'ctl.items': "Bandage / medkit / shields", 'msg.shieldFull': "Shield is already full", 'msg.bandageCap': "Bandages only heal up to 75 HP - use a medkit", 'msg.hpFull': "Health is already full", 'ctl.drop': "Drop weapon", 'ctl.move': 'Move', 'ctl.look': 'Look', 'ctl.fire': 'Fire', 'ctl.aim': 'Aim down sights', 'ctl.jump': 'Jump / glide', 'ctl.crouch': 'Crouch / slide', 'ctl.sprint': 'Sprint', 'ctl.reload': 'Reload', 'ctl.interact': 'Pick up / ride', 'ctl.slots': 'Weapon slots',
   'ctl.nade': 'Grenade', 'ctl.heal': 'Heal', 'ctl.shield': 'Shield potion', 'ctl.view': 'Switch camera', 'ctl.map': 'Map', 'ctl.pause': 'Pause',
   // settings tab
   'set.title': 'Settings', 'set.name': 'Player name', 'set.lang': 'Language', 'set.quality': 'Graphics quality', 'set.auto': 'Auto', 'set.low': 'Low', 'set.med': 'Medium', 'set.high': 'High', 'set.fov': 'Field of view', 'set.sens': 'Mouse sensitivity', 'set.volume': 'Volume',

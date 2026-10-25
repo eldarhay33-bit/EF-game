@@ -49,11 +49,11 @@ const Terrain = {
         .replace('#include <common>', '#include <common>\nuniform sampler2D tGrass, tSand, tRock, tRoad;\nuniform float uWinter;\nvarying vec4 vSplat;\nvarying vec3 vWPos;\nvarying vec3 vWNrm;')
         .replace('#include <color_fragment>', `#include <color_fragment>
           vec3 nn = normalize(vWNrm); vec2 uv = vWPos.xz;
-          vec3 cg = texture2D(tGrass, uv * 0.55).rgb * (0.6 + 0.8 * texture2D(tGrass, uv * 0.037).g) * (0.85 + 0.3 * texture2D(tGrass, uv * 0.13).r) * 1.15;
+          vec3 cg = texture2D(tGrass, uv * 0.55).rgb * (0.6 + 0.8 * texture2D(tGrass, uv * 0.037).g) * (0.85 + 0.3 * texture2D(tGrass, uv * 0.13).r) * vec3(1.05, 1.28, 0.82);
           vec3 cs = texture2D(tSand, uv * 0.20).rgb * (0.78 + 0.44 * texture2D(tSand, uv * 0.029).r) * 1.1;
           vec3 bw = pow(abs(nn), vec3(5.0)); bw /= (bw.x + bw.y + bw.z);
           vec3 cr = (texture2D(tRock, vWPos.zy * 0.11).rgb * bw.x + texture2D(tRock, vWPos.xz * 0.11).rgb * bw.y + texture2D(tRock, vWPos.xy * 0.11).rgb * bw.z);
-          vec3 cd = texture2D(tRoad, uv * 0.9).rgb * (0.75 + 0.5 * texture2D(tRoad, uv * 0.07).r) * (0.85 + 0.3 * texture2D(tRoad, uv * 0.21).g);
+          vec3 cd = texture2D(tRoad, uv * 0.9).rgb * (0.75 + 0.5 * texture2D(tRoad, uv * 0.07).r) * (0.85 + 0.3 * texture2D(tRoad, uv * 0.21).g) * vec3(1.14, 1.05, 0.86);
           vec3 alb = cg * vSplat.x + cs * vSplat.y + cr * vSplat.z + cd * vSplat.w;
           float snow = smoothstep(31.0, 39.0, vWPos.y + (texture2D(tRock, uv * 0.017).r - 0.5) * 9.0) * smoothstep(0.45, 0.78, nn.y);
           alb = mix(alb, vec3(0.74, 0.78, 0.86), snow);
@@ -71,7 +71,7 @@ const Terrain = {
 
     // lake
     const wm = new THREE.MeshStandardMaterial({
-      color: 0x2c6b78, roughness: 0.06, metalness: 0.15, transparent: true, opacity: 0.86,
+      color: 0x1f9aa8, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.86, emissive: 0x04323a, emissiveIntensity: 0.5,
       normalMap: T.waterN, normalScale: new THREE.Vector2(0.55, 0.55), envMapIntensity: 1.6
     });
     T.waterN.repeat.set(14, 14);
@@ -90,7 +90,7 @@ const Terrain = {
     this.seaN = T.waterN.clone(); this.seaN.needsUpdate = true; this.seaN.repeat.set(260, 110);
     this.seaN2 = T.waterN.clone(); this.seaN2.needsUpdate = true; this.seaN2.repeat.set(90, 40);
     const m = new THREE.MeshStandardMaterial({
-      color: 0x1d6a86, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.9,
+      color: 0x12a0c4, roughness: 0.04, metalness: 0.25, transparent: true, opacity: 0.88, emissive: 0x04323f, emissiveIntensity: 0.6,
       normalMap: this.seaN, normalScale: new THREE.Vector2(0.75, 0.75), envMapIntensity: 1.8
     });
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(7000, 3400).rotateX(-Math.PI / 2), m);

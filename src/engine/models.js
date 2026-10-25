@@ -24,7 +24,8 @@ const SIGHTS = {
 const GM = {
   mats: {}, cache: {},
   mat(key, accent) {
-    const k = key + (key === 'accent' ? accent : '');
+    const tint = (key === 'poly' || key === 'metal') && accent !== undefined && accent !== RARITY[0].color;
+    const k = key + (key === 'accent' || tint ? accent : '');
     if (this.mats[k]) return this.mats[k];
     const o = {
       metal:  { color: 0x2b2e31, metalness: 0.9, roughness: 0.36 },
@@ -39,6 +40,7 @@ const GM = {
       cyan:   { color: 0x35f0ff, emissive: 0x35f0ff, emissiveIntensity: 2.4 },
       accent: { color: accent, emissive: accent, emissiveIntensity: 1.4 }
     }[key];
+    if (tint) { const c = new THREE.Color(o.color).lerp(new THREE.Color(accent), key === 'poly' ? 0.42 : 0.22); o.color = c.getHex(); if (key === 'poly') { o.emissive = accent; o.emissiveIntensity = 0.12; } }
     const m = new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 1.1 }, o));
     return (this.mats[k] = m);
   },

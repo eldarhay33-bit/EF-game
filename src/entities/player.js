@@ -32,6 +32,7 @@ const Player = {
     this.planeDir.set(Math.cos(th), 0, Math.sin(th));
     this.pos.set(-this.planeDir.x * (MAP.half + 40), 170, -this.planeDir.z * (MAP.half + 40));
     this.yaw = Math.atan2(-this.planeDir.x, -this.planeDir.z); this.pitch = -0.2;
+    this.lastShot = -10; this.lastFireT = -9; this.lastLookT = -99; this.fireQueueT = 0; this.triggerHeld = false; this.firing = false; this.thrown = true; this.lastAttacker = null;
     this.planeT = 0; this.dmgScale = 1; this.fair = false; this.frozen = false; this.invuln = false;
     this.applyLoadout();
     this.buildRig();
@@ -92,7 +93,7 @@ const Player = {
     else if (this.phase === 'riding') this.updateRiding(dt);
     else this.updateGround(dt);
     this.updateWeapon(dt);
-    this.updateUse(dt);
+    this.updateUse(dt); this.autoLoot(dt);
     this.trackMatch(dt);
     this.updateCamera(dt);
     this.updateRig(dt);
@@ -131,7 +132,7 @@ const Player = {
     this.swimming = depth > 1.2;
     const wading = depth > 0.25;
     const sprintKey = (Input.act.sprint || keys.ShiftLeft) && m.f > 0.2 && !this.crouch && !this.aiming && this.reloadT <= 0 && this.useT <= 0 && !wading && this.charging <= 0;
-    this.sprinting = sprintKey && !this.firing;
+    this.sprinting = sprintKey && !this.firing && !(this.fireQueueT > 0);
     let sp = this.crouch ? 2.7 : this.sprinting ? 8.4 : 5.1;
     sp *= wm * (1 + (this.fx ? this.fx.speed : 0)); if (this.aiming && !this.sprinting) sp *= this.crouch ? 0.8 : 0.62;
     if (this.useT > 0) sp *= 0.5; if (wading) sp *= 0.62; if (this.swimming) sp *= 0.75;

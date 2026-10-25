@@ -25,8 +25,8 @@ const DIFFICULTY = {
 };
 
 const TODS = {
-  day:      { name: '',   sunEl: 48, sunAz: 40,  sun: [1.0, 0.96, 0.88], sunI: 3.2, zenith: [0.09, 0.26, 0.62], horizon: [0.58, 0.72, 0.9], fog: 0.0019, cloud: 0.5, hemi: 0.55, exposure: 0.95 },
-  golden:   { name: '',      sunEl: 11, sunAz: 235, sun: [1.0, 0.62, 0.32], sunI: 3.0, zenith: [0.1, 0.2, 0.5],   horizon: [0.95, 0.55, 0.32], fog: 0.0026, cloud: 0.55, hemi: 0.5, exposure: 0.9 },
+  day:      { name: '',   sunEl: 46, sunAz: 40,  sun: [1.0, 0.94, 0.82], sunI: 3.5, zenith: [0.05, 0.28, 0.8], horizon: [0.64, 0.82, 1.0], fog: 0.0016, cloud: 0.55, hemi: 0.8, exposure: 1.0 },
+  golden:   { name: '',      sunEl: 12, sunAz: 235, sun: [1.0, 0.6, 0.28], sunI: 3.3, zenith: [0.1, 0.22, 0.62],   horizon: [1.0, 0.58, 0.3], fog: 0.0024, cloud: 0.6, hemi: 0.62, exposure: 0.95 },
   overcast: { name: '',      sunEl: 40, sunAz: 60,  sun: [0.85, 0.88, 0.95], sunI: 1.3, zenith: [0.3, 0.36, 0.45],  horizon: [0.55, 0.6, 0.66], fog: 0.0035, cloud: 0.95, hemi: 0.9, exposure: 1.0 },
   night:    { name: '',      sunEl: 24, sunAz: 150, sun: [0.42, 0.52, 0.82], sunI: 0.85, zenith: [0.012, 0.02, 0.07], horizon: [0.05, 0.08, 0.17], fog: 0.0028, cloud: 0.3, hemi: 0.62, exposure: 1.25, stars: 1 }
 };

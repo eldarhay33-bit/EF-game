@@ -26,7 +26,7 @@ Object.assign(Player, {
         slot = this.cur; const old = this.slots[slot].w;
         Loot.spawn(this.pos.x + Math.sin(this.yaw) * -1.2, this.pos.y, this.pos.z + Math.cos(this.yaw) * -1.2, { kind: 'weapon', w: old });
       }
-      it.w.mag = Weapons.stat(it.w).size;
+      if (it.w.mag === undefined) it.w.mag = Weapons.stat(it.w).size;
       this.slots[slot] = { w: it.w };
       this.cur = -1; this.equip(slot); this.vmKey = '';
       if (it.w.id === 'special') { HUD.banner(I18n.t('msg.exotic'), 4); HUD.feed(I18n.t('feed.exotic')); Events.emit('exotic'); if (Profile.match) Profile.match.exotic = true; }
@@ -37,6 +37,36 @@ Object.assign(Player, {
     else if (it.kind === 'shield') { if (this.shields[it.size] >= 6) return; this.shields[it.size]++; }
     else if (it.kind === 'throw') { if (this.nades[it.type] >= 6) return; this.nades[it.type] = Math.min(6, this.nades[it.type] + it.n); }
     Sound.pickup(); Loot.remove(rec);
+  },
+
+  // throw the held weapon (or slot i) on the ground in front of you; Z by default
+  dropWeapon(i) {
+    if (i === undefined) i = this.cur;
+    const s = this.slots[i]; if (!s || this.riding || this.useT > 0 || (this.phase !== 'ground' && this.phase !== 'glide')) return false;
+    const f = this.forward(), x = this.pos.x + f.x * 1.1, z = this.pos.z + f.z * 1.1, y = Math.max(groundAt(x, z, this.pos.y + 1.5), this.pos.y - 0.4);
+    Loot.spawn(x, y, z, { kind: 'weapon', w: s.w }); this.slots[i] = null;
+    this.firing = false; this.reloadT = 0; this.charging = 0; this.spin = 0; this.vmKey = ''; Sound.stopSpin && Sound.stopSpin(); Sound.spinStop && Sound.spinStop(); Sound.whoosh(null);
+    if (i === this.cur) {
+      let n = -1; for (let k = 1; k <= this.slots.length; k++) { const j = (i + k) % this.slots.length; if (this.slots[j]) { n = j; break; } }
+      if (n >= 0) { this.cur = -1; this.equip(n); }
+    }
+    HUD.pickup(WEAPONS[s.w.id].name, RARITY[s.w.rarity].color, '-');
+    return true;
+  },
+
+  // ammo boxes are collected just by walking over them (the other items still need E)
+  autoLoot(dt) {
+    this.lootT = (this.lootT || 0) - dt; if (this.lootT > 0 || this.phase !== 'ground' || !this.alive) return;
+    this.lootT = 0.1;
+    for (const rec of Loot.items) {
+      const it = rec.item; if (it.kind !== 'ammo') continue;
+      const dx = rec.x - this.pos.x, dz = rec.z - this.pos.z; if (dx * dx + dz * dz > 2.1 * 2.1 || Math.abs(rec.y - this.pos.y) > 2.5) continue;
+      const cap = AMMO[it.type].cap, room = cap - this.ammo[it.type]; if (room <= 0) continue;
+      const take = Math.min(room, it.amount); this.ammo[it.type] += take; it.amount -= take;
+      Sound.pickup(); HUD.pickup(AMMO[it.type].name, AMMO_COLORS[it.type], '+' + take);
+      if (it.amount <= 0) Loot.remove(rec);
+      break;
+    }
   },
 
   startReload() {
@@ -89,7 +119,8 @@ Object.assign(Player, {
       }
     }
     // trigger
-    if (this.firing && this.reloadT <= 0.0001 && this.canFireNow(d) && !this.charging && (d.auto || !this.triggerHeld)) {
+    this.fireQueueT = Math.max(0, (this.fireQueueT || 0) - dt);
+    if ((this.firing || this.fireQueueT > 0) && this.reloadT <= 0.0001 && this.canFireNow(d) && !this.charging && (d.auto || !this.triggerHeld)) {
       if (w.mag <= 0) { if (!this.triggerHeld) Sound.dry(); this.triggerHeld = true; if (this.ammo[d.ammo] > 0) this.startReload(); }
       else if (G.time - this.lastShot >= d.rate) {
         if (d.charge) { this.charging = d.charge; Sound.charge(d.charge); this.triggerHeld = true; }
@@ -114,7 +145,7 @@ Object.assign(Player, {
   },
 
   fire(w, d, st) {
-    this.lastShot = G.time; this.lastFireT = G.time; w.mag--; this.triggerHeld = !d.auto;
+    this.lastShot = G.time; this.lastFireT = G.time; w.mag--; this.triggerHeld = !d.auto; this.fireQueueT = 0;
     const PM = Profile.match; if (PM) { PM.shots++; if (w.id !== 'pistol') PM.nonPistol = true; }
     const spread = this.computeSpread(d) * (d.id === 'sniper' ? 1 : 1);
     const eye = G.camera.position.clone(), fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(G.camera.quaternion);
@@ -159,20 +190,30 @@ Object.assign(Player, {
   vmCenter() { if (this.vmRoot) this.vmRoot.updateMatrixWorld(true); },
 
   // ---------- consumables ----------
-  useMed() {
-    if (this.useT > 0 || this.health >= 100 || this.reloadT > 0) return;
+  // want: 'small' (bandage) | 'big' (medkit) | undefined = pick the best item automatically
+  useMed(want) {
+    if (this.useT > 0 || this.throwT > 0 || this.riding || (this.phase !== 'ground' && this.phase !== 'glide')) return;
+    if (this.health >= 100) { HUD.banner(I18n.t('msg.hpFull'), 1.2); return; }
     let kind = null;
-    if (this.meds.small > 0 && this.health < 75) kind = 'small'; else if (this.meds.big > 0) kind = 'big'; else if (this.meds.small > 0) kind = 'small';
-    if (!kind) return;
+    if (want) {
+      if (this.meds[want] <= 0) { HUD.banner(I18n.t('item.heal.' + want) + ' x0', 1); return; }
+      if (want === 'small' && this.health >= 75) { HUD.banner(I18n.t('msg.bandageCap'), 1.8); return; }
+      kind = want;
+    } else if (this.meds.small > 0 && this.health < 75) kind = 'small'; else if (this.meds.big > 0) kind = 'big'; else if (this.meds.small > 0 && this.health < 75) kind = 'small';
+    if (!kind) { if (this.meds.small > 0) HUD.banner(I18n.t('msg.bandageCap'), 1.8); return; }
+    this.reloadT = 0; this.charging = 0;
     this.meds[kind]--; this.pendingUse = kind === 'small' ? { hp: 20, cap: 75 } : { hp: 100, cap: 100 }; this.useTotal = this.useT = kind === 'small' ? 2.2 : 4.5;
     HUD.banner(I18n.t(kind === 'small' ? 'msg.healing' : 'msg.kit'), this.useT); Sound.heal();
   },
 
-  useShield() {
-    if (this.useT > 0 || this.shield >= 100 || this.reloadT > 0) return;
+  useShield(want) {
+    if (this.useT > 0 || this.throwT > 0 || this.riding || (this.phase !== 'ground' && this.phase !== 'glide')) return;
+    if (this.shield >= 100) { HUD.banner(I18n.t('msg.shieldFull'), 1.2); return; }
     let kind = null;
-    if (this.shields.small > 0 && this.shield <= 75) kind = 'small'; else if (this.shields.big > 0) kind = 'big'; else if (this.shields.small > 0) kind = 'small';
+    if (want) { if (this.shields[want] <= 0) { HUD.banner(I18n.t('item.shield.' + want) + ' x0', 1); return; } kind = want; }
+    else if (this.shields.small > 0 && this.shield <= 75) kind = 'small'; else if (this.shields.big > 0) kind = 'big'; else if (this.shields.small > 0) kind = 'small';
     if (!kind) return;
+    this.reloadT = 0; this.charging = 0;
     this.shields[kind]--; this.pendingUse = { sh: kind === 'small' ? 25 : 50 }; this.useTotal = this.useT = kind === 'small' ? 1.8 : 3.4;
     HUD.banner(I18n.t('msg.shieldDrink'), this.useT); Sound.heal();
   },
@@ -222,7 +263,7 @@ Object.assign(Player, {
 
   updateViewmodel(dt) {
     const w = this.weapon(), key = w ? w.id + w.rarity + w.sight + Settings.get('skin') : '';
-    if (key !== this.vmKey) { this.vmKey = key; this.buildVM(w); }
+    if (key !== this.vmKey || (!w && this.vm)) { this.vmKey = key; this.buildVM(w); }
     const show = !this.tppNow && this.phase !== 'plane' && this.phase !== 'freefall' && this.alive && !this.scoped && !(this.riding && this.holdName !== 'pistol');
     if (this.vmRoot) this.vmRoot.visible = show;
     if (!this.vm || !show) { this.lastLook.set(this.yaw, this.pitch); return; }

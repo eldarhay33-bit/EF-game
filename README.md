@@ -15,7 +15,7 @@ powershell -File ..\_serve.ps1 -Root . -Port 8081
 then http://localhost:8081/ . (Opening index.html straight from disk does not work: browsers block module scripts on `file://`.)
 
 ## Deploy
-Drag the folder (or `dist/last-squad-standing-3.0.0.zip` unpacked) onto Netlify, or any static host. Bump `VERSION` in `src/boot.js` for every release (cache busting).
+Drag the folder (or `dist/last-squad-standing-3.1.0.zip` unpacked) onto Netlify, or any static host. Bump `VERSION` in `src/boot.js` for every release (cache busting).
 
 ## Project layout
 - `src/boot.js` loads the scripts in order (add new files to `SCRIPTS`)

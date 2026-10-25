@@ -35,7 +35,7 @@ void main() {
     float c = fbm(uv * 2.2) * 0.8 + 0.2 * fbm(uv * 7.0);
     c = smoothstep(0.64 - cloudCover * 0.34, 0.84 - cloudCover * 0.2, c);
     float lit = 0.6 + 0.4 * clamp(dot(normalize(vec3(d.x, 0.6, d.z)), sunDir) * 0.5 + 0.5, 0.0, 1.0);
-    vec3 cc = mix(horizon, vec3(1.0), 0.72) * lit + sunCol * 0.12 * pow(sd, 3.0);
+    vec3 cc = mix(horizon, vec3(1.0), 0.82) * (lit * 1.12) + sunCol * 0.18 * pow(sd, 3.0);
     col = mix(col, cc, c * smoothstep(0.0, 0.2, h) * 0.92);
   }
   col = mix(col, mix(horizon * 0.9, groundCol, smoothstep(0.0, -0.3, h)), smoothstep(0.015, -0.03, h));

@@ -13,6 +13,7 @@ const HUD = {
     for (const id of ['hud', 'aliveCount', 'killCount', 'zoneInfo', 'compassStrip', 'minimap', 'killfeed', 'crosshair', 'reticle', 'scope', 'hitmarker', 'vignette', 'lowhp', 'flash', 'dmgInd',
       'prompt', 'banner', 'useBar', 'useFill', 'useTxt', 'vehicleHud', 'speedTxt', 'fps', 'slots', 'ammoMag', 'ammoRes', 'ammoMeta', 'consum', 'shieldFill', 'shieldTxt', 'healthFill', 'healthTxt', 'tutBox', 'hidden', 'steerHint', 'under']) this.el[id] = document.getElementById(id);
     this.mctx = this.el.minimap.getContext('2d');
+    this.buildItems();
     for (let i = 0; i < 5; i++) { const d = document.createElement('div'); d.className = 'slot'; this.el.slots.appendChild(d); }
     for (const [n, a] of [['N', 0], ['NE', 45], ['E', 90], ['SE', 135], ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]]) {
       const s = document.createElement('span'); s.textContent = n; s.dataset.a = a; if (!n.includes('N') || n === 'N') s.className = n.length === 1 ? 'main' : ''; this.el.compassStrip.appendChild(s); this.compassLabels.push(s);
@@ -22,6 +23,32 @@ const HUD = {
     this.bctx = this.big.querySelector('canvas').getContext('2d');
     document.addEventListener('keydown', e => { if (e.code === 'KeyM' && G.state === 'playing' && !e.repeat) this.toggleBig(); });
     this.buildMapImage();
+  },
+
+  // consumable bar: bandage / medkit / shield potions / grenades with their keys (also clickable when the mouse is free)
+  buildItems() {
+    const list = [['bandage', 'healS', () => Player.meds.small, 'item.heal.small'], ['medkit', 'healB', () => Player.meds.big, 'item.heal.big'], ['shieldS', 'shS', () => Player.shields.small, 'item.shield.small'], ['shieldB', 'shB', () => Player.shields.big, 'item.shield.big'],
+      ['nade', 'frag', () => Player.nades.frag, 'throw.frag'], ['smoke', 'smoke', () => Player.nades.smoke, 'throw.smoke'], ['flash', 'flash', () => Player.nades.flash, 'throw.flash'], ['sticky', 'sticky', () => Player.nades.sticky, 'throw.sticky']];
+    this.items = list.map(([act, ico, get, name]) => {
+      const b = document.createElement('button'); b.className = 'it ' + ico; b.type = 'button'; b.innerHTML = '<i></i><b></b><kbd></kbd>';
+      b.onclick = () => Input.press(act); this.el.consum.appendChild(b); return { act, get, name, b, n: -1, k: null };
+    });
+  },
+
+  updateItems() {
+    for (const it of this.items) {
+      const n = it.get(), k = Input.device === 'kbm' ? Input.key(it.act === 'nade' ? 'nade' : it.act) : '';
+      if (n !== it.n) { it.n = n; it.b.children[1].textContent = n; it.b.classList.toggle('empty', n <= 0); }
+      if (k !== it.k) { it.k = k; it.b.children[2].textContent = k; it.b.title = I18n.t(it.name); }
+    }
+  },
+
+  // small "+30 9mm rounds" notes above the ammo box
+  pickup(name, color, sign) {
+    const host = document.getElementById('pickups'); if (!host) return;
+    const d = document.createElement('div'); d.className = 'pk'; d.style.borderColor = hexCss(color); d.textContent = (sign || '+') + ' ' + name;
+    host.appendChild(d); while (host.children.length > 4) host.removeChild(host.firstChild);
+    setTimeout(() => d.classList.add('out'), 1500); setTimeout(() => d.remove(), 1900);
   },
 
   mapColor(x, z, out) {
@@ -130,7 +157,7 @@ const HUD = {
       const meta = `${d.name} · ${d.mode} · ${SIGHTS[w.sight].name}`;
       if (this.last.meta !== meta + w.rarity) { this.last.meta = meta + w.rarity; e.ammoMeta.textContent = meta; e.ammoMeta.style.color = hexCss(rar.color); }
     } else { this.set('mag', e.ammoMag, '-'); this.set('res', e.ammoRes, ''); this.set('meta', e.ammoMeta, ''); }
-    this.set('cons', e.consum, I18n.t('hud.cons', { a: P.meds.small, b: P.meds.big, c: P.shields.small, d: P.shields.big, e: P.nades.frag, f: P.nades.smoke, g: P.nades.flash, h: P.nades.sticky }));
+    this.updateItems();
 
     // slots
     const key = P.slots.map(s => (s ? s.w.id + s.w.rarity : '-')).join() + P.cur;

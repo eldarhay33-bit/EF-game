@@ -22,7 +22,7 @@ const SCRIPTS = [
 
 const fill = document.getElementById('loadFill'), text = document.getElementById('loadText');
 
-const VERSION = '3.0.0', DEV = /^(localhost|127\.|\[::1\])/.test(location.hostname);       // dev server: always fetch fresh code
+const VERSION = '3.1.0', DEV = /^(localhost|127\.|\[::1\])/.test(location.hostname);       // dev server: always fetch fresh code
 
 function load(name) {
   return new Promise((resolve, reject) => {

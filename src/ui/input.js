@@ -2,10 +2,10 @@
 const keys = {};
 
 const KEY_LABELS = {
-  kbm:   { fire: 'LMB', aim: 'RMB', jump: 'Space', crouch: 'Ctrl', sprint: 'Shift', reload: 'R', interact: 'E', nade: 'G', heal: 'H', shield: 'Q', map: 'M', pause: 'Esc', view: 'V' },
-  xbox:  { fire: 'RT', aim: 'LT', jump: 'A', crouch: 'B', sprint: 'L3', reload: 'X', interact: 'Y', nade: 'D-Pad ↑', heal: 'D-Pad ↓', shield: 'D-Pad ←', map: 'View', pause: 'Menu', view: 'R3' },
-  ps:    { fire: 'R2', aim: 'L2', jump: '✕', crouch: '○', sprint: 'L3', reload: '□', interact: '△', nade: 'D-Pad ↑', heal: 'D-Pad ↓', shield: 'D-Pad ←', map: 'Touchpad', pause: 'Options', view: 'R3' },
-  touch: { fire: '●', aim: '⌖', jump: '⤒', crouch: '⌄', sprint: '≫', reload: '⟳', interact: '✋', nade: '💣', heal: '✚', shield: '◇', map: '▦', pause: 'II', view: '👁' }
+  kbm:   { fire: 'LMB', aim: 'RMB', jump: 'Space', crouch: 'Ctrl', sprint: 'Shift', reload: 'R', interact: 'E', nade: 'G', heal: 'H', shield: 'Q', map: 'M', pause: 'Esc', view: 'V', drop: 'Z', items: '6 7 8 9', bandage: '6', medkit: '7', shieldS: '8', shieldB: '9', smoke: 'F', flash: 'X', sticky: 'B', frag: 'G' },
+  xbox:  { fire: 'RT', aim: 'LT', jump: 'A', crouch: 'B', sprint: 'L3', reload: 'X', interact: 'Y', nade: 'D-Pad ↑', heal: 'D-Pad ↓', shield: 'D-Pad ←', map: 'View', pause: 'Menu', view: 'R3', drop: 'Hold X', items: 'D-Pad', frag: 'D-Pad ↑', sticky: 'D-Pad →' },
+  ps:    { fire: 'R2', aim: 'L2', jump: '✕', crouch: '○', sprint: 'L3', reload: '□', interact: '△', nade: 'D-Pad ↑', heal: 'D-Pad ↓', shield: 'D-Pad ←', map: 'Touchpad', pause: 'Options', view: 'R3', drop: 'Hold □', items: 'D-Pad', frag: 'D-Pad ↑', sticky: 'D-Pad →' },
+  touch: { fire: '●', aim: '⌖', jump: '⤒', crouch: '⌄', sprint: '≫', reload: '⟳', interact: '✋', nade: '💣', heal: '✚', shield: '◇', map: '▦', pause: 'II', view: '👁', drop: '🗑', items: '✚ ◇' }
 };
 
 const Input = {
@@ -93,10 +93,10 @@ const Input = {
     if (e.repeat) return;
     keys[e.code] = down; this.device = 'kbm';
     const P = Player; if (!P.alive) return;
-    const map = { KeyR: 'reload', KeyE: 'interact', KeyH: 'heal', KeyQ: 'shield', KeyG: 'nade', KeyF: 'smoke', KeyX: 'flash', KeyB: 'sticky', KeyV: 'view', KeyM: 'map', Tab: 'map', Space: 'jump', ShiftLeft: 'sprint', ControlLeft: 'crouch', KeyC: 'crouch' };
+    const map = { KeyR: 'reload', KeyE: 'interact', KeyH: 'heal', KeyQ: 'shield', KeyG: 'nade', KeyF: 'smoke', KeyX: 'flash', KeyB: 'sticky', KeyV: 'view', KeyZ: 'drop', KeyM: 'map', Tab: 'map', Space: 'jump', ShiftLeft: 'sprint', ControlLeft: 'crouch', KeyC: 'crouch' };
     const a = map[e.code];
     if (a) down ? this.press(a) : this.release(a);
-    if (down && e.code.startsWith('Digit')) { const n = parseInt(e.code.slice(5)); if (n >= 1 && n <= 5) this.press('slot' + n); }
+    if (down && e.code.startsWith('Digit')) { const n = parseInt(e.code.slice(5)); if (n >= 1 && n <= 5) this.press('slot' + n); else if (n >= 6 && n <= 9) this.press(['bandage', 'medkit', 'shieldS', 'shieldB'][n - 6]); }
     this.act.breath = !!keys.ShiftLeft;
   },
 
@@ -123,7 +123,7 @@ const Input = {
     if (a === 'pause') { if (G.state === 'playing') Game.pause(); return; }
     if (G.state !== 'playing' || !P.alive || (P.frozen && a !== 'view' && a !== 'map')) return;
     switch (a) {
-      case 'fire': P.firing = true; P.triggerHeld = false; this.act.fireHeld = true; break;
+      case 'fire': P.firing = true; P.triggerHeld = false; P.fireQueueT = 0.2; this.act.fireHeld = true; break;
       case 'aim': P.aiming = true; break;
       case 'reload': P.startReload(); break;
       case 'interact': P.interact(); break;
@@ -131,6 +131,7 @@ const Input = {
       case 'sprint': this.act.sprint = true; break;
       case 'crouch': this.act.crouchHeld = true; if (P.phase === 'ground') P.tryCrouchOrSlide(); break;
       case 'heal': P.useMed(); break; case 'shield': P.useShield(); break;
+      case 'bandage': P.useMed('small'); break; case 'medkit': P.useMed('big'); break; case 'shieldS': P.useShield('small'); break; case 'shieldB': P.useShield('big'); break; case 'drop': P.dropWeapon(); break;
       case 'nade': P.throwNade('frag'); break; case 'smoke': P.throwNade('smoke'); break; case 'flash': P.throwNade('flash'); break; case 'sticky': P.throwNade('sticky'); break;
       case 'view': Settings.set('perspective', Settings.get('perspective') === 'fpp' ? 'tpp' : 'fpp'); HUD.banner(I18n.t(Settings.get('perspective') === 'fpp' ? 'hud.fpp' : 'hud.tpp'), 1); break;
       case 'map': HUD.toggleBig(); break;
@@ -226,7 +227,7 @@ const Input = {
     B('crouch', '⌄', 'crouch', { right: '34px', bottom: '190px' }, {});
     B('reload', '⟳', 'small', { right: '260px', bottom: '90px' }, {});
     const inter = B('interact', '✋', 'interact', { right: '220px', bottom: '250px' }, {}); T.interactBtn = inter; inter.style.display = 'none';
-    B('nade', '💣', 'small', { right: '20px', bottom: '300px' }, {});
+    B('nade', '💣', 'small', { right: '20px', bottom: '300px' }, {}); B('drop', '🗑', 'mini', { left: '14px', top: '250px' }, {});
     B('heal', '✚', 'small', { right: '90px', bottom: '300px' }, {});
     B('shield', '◇', 'small', { right: '160px', bottom: '310px' }, {});
     B('view', '👁', 'mini', { left: '14px', top: '130px' }, {});
@@ -275,7 +276,7 @@ const Input = {
       if (lt && !this.pad.lt) this.press('aim'); if (!lt && this.pad.lt) this.release('aim'); this.pad.lt = lt;
       if (edge(0)) this.press('jump'); if (up(0)) this.release('jump');
       if (edge(1)) this.press('crouch'); if (up(1)) this.release('crouch');
-      if (edge(2)) this.press('reload'); if (edge(3)) this.press('interact');
+      if (edge(2)) { this.press('reload'); this.padDropT = 0; } if (pr(2)) { this.padDropT = (this.padDropT || 0) + dt; if (this.padDropT > 0.7) { this.padDropT = -99; this.press('drop'); } } if (edge(3)) this.press('interact');
       if (edge(4)) this.cycle(-1); if (edge(5)) this.cycle(1);
       if (edge(12)) this.press('nade'); if (edge(13)) this.press('heal'); if (edge(14)) this.press('shield'); if (edge(15)) this.press('sticky');
       if (edge(10)) this.sprintLatch = !this.sprintLatch;

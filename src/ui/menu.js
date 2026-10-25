@@ -105,7 +105,7 @@ const Menu = {
   // ---------- controls tab ----------
   buildControls() {
     const el = document.getElementById('tab-controls'); el.innerHTML = '';
-    const A = ['move', 'look', 'fire', 'aim', 'jump', 'crouch', 'sprint', 'reload', 'interact', 'slots', 'nade', 'heal', 'shield', 'view', 'map', 'pause'];
+    const A = ['move', 'look', 'fire', 'aim', 'jump', 'crouch', 'sprint', 'reload', 'interact', 'slots', 'nade', 'heal', 'shield', 'items', 'drop', 'view', 'map', 'pause'];
     const col = (title, dev, extra) => {
       const c = this.h('div', 'card ctl'); c.appendChild(this.h('h3', '', title));
       const K = KEY_LABELS[dev];
@@ -152,7 +152,12 @@ const Menu = {
   // ---------- 3D preview ----------
   buildScene() {
     const s = this.scene = new THREE.Scene();
-    s.background = new THREE.Color(0x0a1018); s.fog = new THREE.Fog(0x0a1018, 8, 24);
+    {
+      // sunset-gradient backdrop with soft stars instead of a black void
+      const cv = document.createElement('canvas'); cv.width = 4; cv.height = 512; const cx = cv.getContext('2d'), gr = cx.createLinearGradient(0, 0, 0, 512);
+      gr.addColorStop(0, '#0b1240'); gr.addColorStop(0.42, '#3a2a7a'); gr.addColorStop(0.68, '#b24a8a'); gr.addColorStop(0.86, '#ff8a5a'); gr.addColorStop(1, '#ffc27a'); cx.fillStyle = gr; cx.fillRect(0, 0, 4, 512);
+      const bt = new THREE.CanvasTexture(cv); bt.colorSpace = THREE.SRGBColorSpace; s.background = bt; s.fog = new THREE.Fog(0x4a2a78, 9, 30);
+    }
     const floor = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.4, 0.2, 48), new THREE.MeshStandardMaterial({ color: 0x1a222c, metalness: 0.85, roughness: 0.25, envMapIntensity: 0.8 }));
     floor.position.y = -0.1; floor.receiveShadow = true; s.add(floor);
     this.ring = new THREE.Mesh(new THREE.TorusGeometry(2.05, 0.03, 8, 80).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf3c64a, emissive: 0xf3c64a, emissiveIntensity: 2.5 }));

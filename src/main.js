@@ -8,7 +8,7 @@ const QUALITY = {
 };
 
 const GRADE_SHADER = {
-  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, vignette: { value: 0.55 }, grain: { value: 0.025 }, sat: { value: 1.08 }, contrast: { value: 1.06 }, hurt: { value: 0 }, thermal: { value: 0 }, res: { value: new THREE.Vector2(1, 1) }, sunUv: { value: new THREE.Vector2(0.5, 0.5) }, rays: { value: 0 }, sunCol: { value: new THREE.Color(1, 0.9, 0.7) } },
+  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, vignette: { value: 0.42 }, grain: { value: 0.018 }, sat: { value: 1.24 }, contrast: { value: 1.1 }, hurt: { value: 0 }, thermal: { value: 0 }, res: { value: new THREE.Vector2(1, 1) }, sunUv: { value: new THREE.Vector2(0.5, 0.5) }, rays: { value: 0 }, sunCol: { value: new THREE.Color(1, 0.9, 0.7) } },
   vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `
     uniform sampler2D tDiffuse; uniform float time, vignette, grain, sat, contrast, hurt, thermal, rays; uniform vec2 res, sunUv; uniform vec3 sunCol; varying vec2 vUv;
@@ -23,8 +23,9 @@ const GRADE_SHADER = {
         col += sunCol * acc * 0.035 * rays * smoothstep(1.4, 0.0, length(vUv - sunUv));
       }
       float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
-      col = mix(vec3(l), col, sat);
+      col = mix(vec3(l), col, sat + 0.18 * (1.0 - clamp(max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b)), 0.0, 1.0)));       // vibrance: boosts dull colours more than vivid ones
       col = (col - 0.18) * contrast + 0.18;
+      col *= mix(vec3(0.97, 1.0, 1.05), vec3(1.07, 1.02, 0.93), smoothstep(0.15, 0.75, l));                                               // cool shadows, warm highlights
       col *= 1.0 - vignette * r2 * 1.7;
       col += (hash(vUv * res + time) - 0.5) * grain;
       col = mix(col, vec3(col.r * 1.5 + 0.1, col.g * 0.45, col.b * 0.45), hurt);
@@ -55,7 +56,7 @@ const Game = {
     G.camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 1800); G.scene.add(G.camera);
     G.player = Player;
     G.vmScene = new THREE.Scene(); G.vmCam = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.01, 10); G.vmScene.add(G.vmCam);
-    G.vmScene.add(new THREE.HemisphereLight(0xdfeaff, 0x7a6a50, 0.6));
+    G.vmScene.add(new THREE.HemisphereLight(0xeaf2ff, 0x9a8a6a, 1.0));
     this.vmSun = new THREE.DirectionalLight(0xffffff, 2.2); this.vmSun.position.set(2, 4, 3); G.vmScene.add(this.vmSun);
 
     this.resolveQuality();
@@ -115,7 +116,7 @@ const Game = {
     const c = this.composer = new FX.EffectComposer(r, rt);
     this.mainPass = new FX.RenderPass(G.scene, G.camera);
     this.vmPass = new FX.RenderPass(G.vmScene, G.vmCam); this.vmPass.clear = false; this.vmPass.clearDepth = true;
-    this.bloom = new FX.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.22, 0.6, 0.92);
+    this.bloom = new FX.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.34, 0.7, 0.82);
     this.grade = new FX.ShaderPass(GRADE_SHADER);
     this.outPass = new FX.OutputPass();
     c.addPass(this.mainPass); c.addPass(this.vmPass); c.addPass(this.bloom); c.addPass(this.grade); c.addPass(this.outPass);
@@ -173,7 +174,7 @@ const Game = {
     G.state = 'playing'; G.time = 0; G.noises.length = 0; this.killer = null; this.xray = false; G.matchOver = false;
     Profile.beginMatch(mode, Settings.get('difficulty'));
     if (mode === 'duel') Duel.begin(opts); else if (mode === 'tutorial') Tutorial.begin(opts); else this.beginBR(opts);
-    HUD.last = {}; HUD.el.killfeed.innerHTML = ''; HUD.el.dmgInd.innerHTML = ''; HUD.useBar(0);
+    HUD.last = {}; HUD.lastBeat = 0; HUD.el.killfeed.innerHTML = ''; HUD.el.dmgInd.innerHTML = ''; HUD.useBar(0);
     for (const id of ['pause', 'endScreen']) document.getElementById(id).classList.add('hidden');
     Menu.hide(); HUD.show(true); Input.showTouch(true);
     Sound.ambienceStart();
@@ -318,7 +319,7 @@ const Game = {
         this.mainPass.scene = Menu.scene; this.mainPass.camera = Menu.cam; this.vmPass.enabled = false; this.grade.uniforms.time.value = G.time;
         this.grade.uniforms.hurt.value = 0; this.grade.uniforms.thermal.value = 0; this.bloom.strength = 0.4;
         this.composer.render();
-        this.mainPass.scene = G.scene; this.mainPass.camera = G.camera; this.vmPass.enabled = true; this.bloom.strength = 0.22;
+        this.mainPass.scene = G.scene; this.mainPass.camera = G.camera; this.vmPass.enabled = true; this.bloom.strength = 0.34;
       } else r.render(Menu.scene, Menu.cam);
       return;
     }

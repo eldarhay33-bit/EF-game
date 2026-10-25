@@ -67,6 +67,15 @@ const Nature = {
     return { core, cards: this.leafBall(B, 28, 1.2, 77) };
   },
 
+  // oak canopy colours: mostly fresh greens, a few yellow, orange and pink trees for a postcard look
+  oakTint(h) {
+    const r = rand();
+    if (r < 0.1) return new THREE.Color(1.5, 0.72, 0.3);           // autumn orange
+    if (r < 0.2) return new THREE.Color(1.35, 1.25, 0.4);          // golden yellow
+    if (r < 0.27) return new THREE.Color(1.45, 0.8, 1.0);          // cherry blossom
+    return new THREE.Color(rr(0.75, 1.05), rr(1.1, 1.4), rr(0.45, 0.75));
+  },
+
   // wind sway for tree canopies: amplitude grows with height above the trunk base
   windify(mat, amp) {
     mat.onBeforeCompile = (sh) => {
@@ -143,7 +152,7 @@ const Nature = {
       if (fbm(x * 0.022 + 5, z * 0.022 + 1, 2) < 0.44 + (b === 'mountain' ? 0.06 : 0)) continue;
       const s = rr(0.85, 1.55), type = (b === 'mountain' || rand() < 0.62) ? 'pine' : 'oak';
       trees[type].push({ x, y: h - 0.2, z, sx: s, sy: s * rr(0.9, 1.15), sz: s, ry: rr(0, 6.28) });
-      (type === 'pine' ? cPine : cOak).push(type === 'pine' ? gv(0.6, 1.1) : new THREE.Color(rr(0.78, 1.15), rr(0.85, 1.12), rr(0.55, 0.85)));
+      (type === 'pine' ? cPine : cOak).push(type === 'pine' ? new THREE.Color(rr(0.55, 0.95), rr(0.95, 1.35), rr(0.7, 1.1)) : this.oakTint(h));
     }
     const trunk = new THREE.CylinderGeometry(0.16, 0.3, 4.6, 7).translate(0, 2.3, 0);
     const trunkOak = new THREE.CylinderGeometry(0.22, 0.38, 5.6, 8).translate(0, 2.8, 0);
@@ -152,9 +161,9 @@ const Nature = {
     this.inst(scene, trunk, bark, trees.pine, null);
     this.inst(scene, trunkOak, bark, trees.oak, null);
     const pg = this.pineGeos(), og = this.oakGeos();
-    const needleMat = this.windify(stdMat({ map: T.needleCard, alphaTest: 0.45, side: THREE.DoubleSide }), 0.6);
-    const leafMat = this.windify(stdMat({ map: T.leafCard, alphaTest: 0.45, side: THREE.DoubleSide }), 0.5);
-    const pineCore = this.windify(stdMat({ map: T.needles, color: 0x8aa88a }), 0.6), oakCore = this.windify(stdMat({ map: T.leaf, color: 0x7d9a64 }), 0.5);
+    const needleMat = this.windify(stdMat({ map: T.needleCard, alphaTest: 0.45, side: THREE.DoubleSide, emissive: 0x16301a, emissiveIntensity: 0.6 }), 0.6);
+    const leafMat = this.windify(stdMat({ map: T.leafCard, alphaTest: 0.45, side: THREE.DoubleSide, emissive: 0x1d3414, emissiveIntensity: 0.6 }), 0.5);
+    const pineCore = this.windify(stdMat({ map: T.needles, color: 0xb2d6a6, emissive: 0x17331a, emissiveIntensity: 0.7 }), 0.6), oakCore = this.windify(stdMat({ map: T.leaf, color: 0xb0d088, emissive: 0x1d3414, emissiveIntensity: 0.7 }), 0.5);
     this.inst(scene, pg.core, pineCore, trees.pine, cPine);
     this.inst(scene, pg.cards, needleMat, trees.pine, cPine);
     this.inst(scene, og.core, oakCore, trees.oak, cOak);

@@ -1,0 +1,3 @@
+{
+  "_help": "Modelled bikes. Put a .glb next to this file and add an entry named after the bike (scooter, sport, raider or hyper): \"sport\": { \"file\": \"my-bike.glb\", \"length\": 2.0, \"yaw\": 0, \"seat\": [0, 0.8, 0.15] }. Front towards -z, y up; yaw turns the model, length (or scale) sizes it; seat is where the rider sits. Nodes called wheel_f / wheel_r / fork (or front wheel, rear wheel, handlebar) turn and steer. Empty = the built-in bikes. See docs/ADD-MODELS.md."
+}

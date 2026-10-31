@@ -94,7 +94,7 @@ const Loot = {
       const p = randomGroundPoint((x, z) => !inExcl(x, z, 0) || Math.random() < 0.3);
       this.spawn(p.x, terrainHeight(p.x, p.z), p.z, this.roll(0));
     }
-    if (Settings.get('special') === 'test') {
+    if (Weapons.trial()) {
       const s = World.lootSpots[0] || { x: 0, z: 0, y: 2 };
       this.spawn(s.x + 1.2, s.y, s.z + 1.2, { kind: 'weapon', w: Weapons.make('special', 5) });
     }

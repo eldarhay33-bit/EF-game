@@ -11,7 +11,8 @@ const WEAPONS = {
   minigun:     { name: '',       mode: '',    hold: 'heavy',    dmg: 11, rate: 0.045, auto: true, mag: 150, reload: 4.5, ammo: 'medium', spread: 0.05,  ads: 0.03,  range: 160, fall: [30, 110, 0.5],  pellets: 1,  rv: 0.006, rh: 0.012, move: 0.55, head: 1.4, snd: 'minigun', eq: 0.9,  sights: ['iron'], spinup: 0.8, minRarity: 3, w: 2 },
   sniper:      { name: '',     mode: '',         hold: 'rifle',    dmg: 100, rate: 1.35, auto: false, mag: 5, reload: 3.3,  ammo: 'heavy',  spread: 0.07,  ads: 0.0004, range: 650, fall: [400, 650, 0.9], pellets: 1, rv: 0.07,  rh: 0.01,  move: 0.85, head: 2.2, snd: 'sniper',  eq: 0.7,  sights: ['x6', 'x6', 'x8', 'x8', 'x12'], bolt: true, w: 6 },
   rpg:         { name: 'RPG',          mode: '',         hold: 'launcher', dmg: 120, rate: 1.3, auto: false, mag: 1,  reload: 3.8,  ammo: 'rocket', spread: 0.03,  ads: 0.006, range: 400, fall: [999, 1000, 1],  pellets: 1,  rv: 0.08,  rh: 0.01,  move: 0.82, head: 1, snd: 'rpg',     eq: 0.9,  sights: ['iron'], rocket: true, minRarity: 2, w: 3 },
-  special:     { name: '', mode: '', hold: 'rifle', dmg: 420, rate: 2.2, auto: false, mag: 4,  reload: 3.0,  ammo: 'heavy',  spread: 0.05,  ads: 0.0,   range: 3000, fall: [3000, 3001, 1], pellets: 1, rv: 0.09,  rh: 0.0,   move: 0.8,  head: 1,   snd: 'special', eq: 1.0,  sights: ['thermal'], charge: 0.85, pierce: true, exotic: true, w: 0 }
+  // Phantom-X (found once in 10,000 weapon rolls): full auto, 30 rounds, never misses (the bullets bend onto the best target inside `lock` degrees), goes through walls, thermal scope shows enemies through them
+  special:     { name: '', mode: '', hold: 'rifle', dmg: 95, rate: 0.085, auto: true, mag: 30, reload: 2.0, ammo: 'heavy', spread: 0, ads: 0, range: 3000, fall: [3000, 3001, 1], pellets: 1, rv: 0.004, rh: 0, move: 1.0, head: 2.4, snd: 'special', eq: 0.45, sights: ['thermal'], pierce: true, lock: 14, exotic: true, w: 0 }
 };
 
 const AMMO = {
@@ -30,7 +31,10 @@ const THROWABLES = {
 };
 
 const Weapons = {
-  specialChance() { return { real: 1 / 10000, event: 1 / 60, test: 1 }[Settings.get('special')] || 1 / 10000; },
+  // The Phantom-X turns up with a fixed chance of 1 in 10,000 per weapon roll, whatever the settings say. The only exception is the trial option: it puts one on the ground next to
+  // the first loot spot (see Loot.populate), and a trial match does not count (no stats, rewards, missions or achievements; see Profile.match.trial). Never in online matches.
+  specialChance() { return 1 / 10000; },
+  trial() { return Settings.get('special') === 'test' && !(typeof Net !== 'undefined' && (Net.session || Net.coop)); },
 
   make(id, rarity) {
     const d = WEAPONS[id], r = rarity === undefined ? 0 : rarity;
@@ -102,6 +106,16 @@ const Combat = {
 
   actors() { return [G.player, ...G.bots, ...Net.actors()].filter(a => a && a.alive); },
 
+  // the enemy closest to the line of aim inside a cone of `deg` degrees: { a, dir } with dir pointing at its head, or null
+  lockTarget(origin, dir, targets, deg) {
+    let best = null, bc = Math.cos(deg * Math.PI / 180);
+    for (const a of targets) {
+      const hy = a.riding ? 1.3 : a.crouch ? 1.12 : 1.6, tx = a.pos.x - origin.x, ty = a.pos.y + hy - origin.y, tz = a.pos.z - origin.z, l = Math.hypot(tx, ty, tz) || 1, c = (tx * dir.x + ty * dir.y + tz * dir.z) / l;
+      if (c > bc) { bc = c; best = { a, dir: new THREE.Vector3(tx / l, ty / l, tz / l) }; }
+    }
+    return best;
+  },
+
   // Fires one shot (all pellets) from origin along dir. Returns {hit, killed, head, dist}
   shoot(shooter, origin, dir, wpn, spread) {
     const d = WEAPONS[wpn.id], st = Weapons.stat(wpn);
@@ -109,9 +123,10 @@ const Combat = {
     const targets = this.actors().filter(a => a !== shooter && !(a.team && a.team === shooter.team));
     Net.sendShot(shooter, origin, dir, wpn);
     const scale = shooter.dmgScale || 1;
+    const lock = d.lock && shooter === G.player ? this.lockTarget(origin, dir, targets, d.lock) : null;            // the Phantom-X bends its bullets onto the target in its cone
     for (let p = 0; p < d.pellets; p++) {
-      const dd = dir.clone();
-      if (spread > 0) { dd.x += (Math.random() - 0.5) * 2 * spread; dd.y += (Math.random() - 0.5) * 2 * spread; dd.z += (Math.random() - 0.5) * 2 * spread; dd.normalize(); }
+      const dd = lock ? lock.dir.clone() : dir.clone();
+      if (spread > 0 && !lock) { dd.x += (Math.random() - 0.5) * 2 * spread; dd.y += (Math.random() - 0.5) * 2 * spread; dd.z += (Math.random() - 0.5) * 2 * spread; dd.normalize(); }
       let range = d.range, wallT = range, wallHit = null;
       if (!d.pierce) {
         const rb = rayBoxes(origin, dd, range);

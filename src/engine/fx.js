@@ -149,10 +149,10 @@ const FX = Object.assign(window.FX || {}, {
     if (len < 2.5) return;
     let t = this.tracerPool.pop();
     if (!t) { t = new THREE.Mesh(this.tracerGeo, this.tracerMat); t.frustumCulled = false; this.scene.add(t); }
-    t.position.copy(start); t.lookAt(to); t.scale.set(wid === 'special' ? 6 : wid === 'sniper' ? 2.2 : 1.2, wid === 'special' ? 6 : wid === 'sniper' ? 2.2 : 1.2, Math.min(len, wid === 'special' ? len : 18));
-    t.visible = true; t.userData.life = wid === 'special' ? 0.5 : 0.05; t.userData.end = to.clone(); t.userData.dir = to.clone().sub(start).normalize();
+    t.position.copy(start); t.lookAt(to); t.scale.set(wid === 'special' ? 2.6 : wid === 'sniper' ? 2.2 : 1.2, wid === 'special' ? 2.6 : wid === 'sniper' ? 2.2 : 1.2, Math.min(len, wid === 'special' ? len : 18));
+    t.visible = true; t.userData.life = wid === 'special' ? 0.16 : 0.05; t.userData.end = to.clone(); t.userData.dir = to.clone().sub(start).normalize();
     t.userData.sp = wid === 'special' ? 0 : 260; t.userData.len = len; t.userData.o = start.clone();
-    if (wid === 'special') { t.material = new THREE.MeshBasicMaterial({ color: 0x35f0ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }); } else t.material = this.tracerMat;
+    if (wid === 'special') { t.material = this.phantomMat || (this.phantomMat = new THREE.MeshBasicMaterial({ color: 0x35f0ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); } else t.material = this.tracerMat;
     this.tracers.push(t);
   },
 

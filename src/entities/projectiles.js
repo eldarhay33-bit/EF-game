@@ -1,4 +1,5 @@
 // Grenades (frag / smoke / flash), RPG rockets and explosion damage.
+const _po = new THREE.Vector3(), _pm = new THREE.Vector3(), _pd = new THREE.Vector3(), _pn = new THREE.Vector3(), _pt = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);       // scratch vectors: nothing is allocated per frame for a flying grenade or rocket
 const Explosions = {
   boom(pos, radius, dmg, owner, wid) {
     FX.explosion(pos, radius); Sound.explosion(pos, radius / 7);
@@ -68,7 +69,7 @@ const Projectiles = {
       const p = this.list[i]; p.t += dt;
       if (p.type === 'rocket') {
         p.speed = Math.min(62, p.speed + 120 * dt);
-        const step = p.speed * dt, o = p.pos.clone();
+        const step = p.speed * dt, o = _po.copy(p.pos);
         let hitT = step, boom = false;
         const rb = rayBoxes(o, p.dir, step); if (rb.hit) { hitT = rb.dist; boom = true; }
         const rt = rayTerrain(o, p.dir, step); if (rt < hitT - 0.001) { hitT = rt; boom = true; }
@@ -78,7 +79,7 @@ const Projectiles = {
         p.trail -= dt;
         if (p.trail <= 0) {
           p.trail = 0.012;
-          const tail = p.pos.clone().addScaledVector(p.dir, -0.4);
+          const tail = _pt.copy(p.pos).addScaledVector(p.dir, -0.4);
           FX.smoke.spawn(tail.x, tail.y, tail.z, (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4, 1.5, 0.25, 1.1, 0.75, 0.75, 0.75, 0.5, 0, 0, 0.5);
           FX.glow.spawn(tail.x, tail.y, tail.z, 0, 0, 0, 0.12, 0.45, 0.1, 1, 0.6, 0.2, 0.9, 0);
         }
@@ -91,13 +92,13 @@ const Projectiles = {
           continue;
         }
         p.vel.y -= 19 * dt; p.vel.multiplyScalar(1 - 0.12 * dt);
-        const o = p.pos.clone(), move = p.vel.clone().multiplyScalar(dt), len = move.length();
+        const o = _po.copy(p.pos), move = _pm.copy(p.vel).multiplyScalar(dt), len = move.length();
         if (len > 1e-5) {
-          const dir = move.clone().normalize(), rb = rayBoxes(o, dir, len + 0.08);
+          const dir = _pd.copy(move).normalize(), rb = rayBoxes(o, dir, len + 0.08);
           if (rb.hit && rb.dist < len + 0.06) {
-            const n = new THREE.Vector3(rb.normal.x, rb.normal.y, rb.normal.z);
+            const n = _pn.set(rb.normal.x, rb.normal.y, rb.normal.z);
             p.pos.copy(o).addScaledVector(dir, Math.max(0, rb.dist - 0.07));
-            if (sticky) { p.stuck = true; p.vel.set(0, 0, 0); p.mesh.position.copy(p.pos); p.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n); Sound.bounce(p.pos); continue; }
+            if (sticky) { p.stuck = true; p.vel.set(0, 0, 0); p.mesh.position.copy(p.pos); p.mesh.quaternion.setFromUnitVectors(_up, n); Sound.bounce(p.pos); continue; }
             p.vel.addScaledVector(n, -(1 + 0.4) * p.vel.dot(n)).multiplyScalar(0.78); Sound.bounce(p.pos);
             if (n.y > 0.5 && Math.abs(p.vel.y) < 1.2) p.vel.y = 0;
           } else {
@@ -106,7 +107,7 @@ const Projectiles = {
           }
         }
         const gh = terrainHeight(p.pos.x, p.pos.z);
-        if (sticky && p.pos.y < gh + 0.06) { p.pos.y = gh + 0.04; p.stuck = true; p.vel.set(0, 0, 0); p.mesh.position.copy(p.pos); p.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), terrainNormal(p.pos.x, p.pos.z)); Sound.bounce(p.pos); continue; }
+        if (sticky && p.pos.y < gh + 0.06) { p.pos.y = gh + 0.04; p.stuck = true; p.vel.set(0, 0, 0); p.mesh.position.copy(p.pos); p.mesh.quaternion.setFromUnitVectors(_up, terrainNormal(p.pos.x, p.pos.z)); Sound.bounce(p.pos); continue; }
         if (p.pos.y < gh + 0.06) {
           p.pos.y = gh + 0.06;
           const n = terrainNormal(p.pos.x, p.pos.z), vn = p.vel.dot(n);

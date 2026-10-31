@@ -133,11 +133,12 @@ const Nature = {
   setWinter(v) {
     const set = (m, on, off) => { if (m) m.color.setHex(v ? on : off); };
     set(this.mats.needles, 0xe3edf2, 0xffffff); set(this.mats.leaf, 0xb7a89a, 0xffffff); set(this.mats.blade, 0xd6dfd8, 0xffffff); set(this.mats.tall, 0xd9d4bf, 0xffffff); set(this.mats.bush, 0xc7cfc4, 0xffffff);
+    if (typeof Trees !== 'undefined') Trees.setWinter(v);
   },
 
   build(scene, quality) {
     const T = Tex.t, q = { low: 0.45, med: 0.75, high: 1 }[quality] || 1;
-    const stdMat = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.92, metalness: 0, envMapIntensity: 0.5 }, o));
+    const stdMat = (o) => FastEnv.make(Object.assign({ roughness: 0.92, metalness: 0, envMapIntensity: 0.5 }, o));
     const trees = { pine: [], oak: [] }, cacti = [], bushes = [], rocks = [], rockCols = [];
     const cPine = [], cOak = [], cBush = [];
     const gv = (a, b) => { const v = rr(a, b); return new THREE.Color(v, v * rr(0.96, 1.06), v * rr(0.85, 1)); };
@@ -156,21 +157,22 @@ const Nature = {
     }
     const trunk = new THREE.CylinderGeometry(0.16, 0.3, 4.6, 7).translate(0, 2.3, 0);
     const trunkOak = new THREE.CylinderGeometry(0.22, 0.38, 5.6, 8).translate(0, 2.8, 0);
-    const bark = stdMat({ map: T.bark, roughness: 0.95 });
+    const bark = stdMat({ map: T.bark, normalMap: T.barkN, roughness: 0.95 });
     const all = trees.pine.concat(trees.oak);
-    this.inst(scene, trunk, bark, trees.pine, null);
-    this.inst(scene, trunkOak, bark, trees.oak, null);
+    const card = (...a) => this.cardTrees.push(this.inst(...a)); this.cardTrees = [];                  // the card trees: Low, Medium and phones; High and Ultra show the modelled ones (world/trees.js) instead
+    card(scene, trunk, bark, trees.pine, null);
+    card(scene, trunkOak, bark, trees.oak, null);
     const pg = this.pineGeos(), og = this.oakGeos();
-    const needleMat = this.windify(stdMat({ map: T.needleCard, alphaTest: 0.45, side: THREE.DoubleSide, emissive: 0x16301a, emissiveIntensity: 0.6 }), 0.6);
-    const leafMat = this.windify(stdMat({ map: T.leafCard, alphaTest: 0.45, side: THREE.DoubleSide, emissive: 0x1d3414, emissiveIntensity: 0.6 }), 0.5);
+    const needleMat = this.windify(stdMat({ map: T.needleCard, alphaTest: 0.4, alphaToCoverage: true, side: THREE.DoubleSide, emissive: 0x16301a, emissiveIntensity: 0.6 }), 0.6);
+    const leafMat = this.windify(stdMat({ map: T.leafCard, alphaTest: 0.4, alphaToCoverage: true, side: THREE.DoubleSide, emissive: 0x1d3414, emissiveIntensity: 0.6 }), 0.5);
     const pineCore = this.windify(stdMat({ map: T.needles, color: 0xb2d6a6, emissive: 0x17331a, emissiveIntensity: 0.7 }), 0.6), oakCore = this.windify(stdMat({ map: T.leaf, color: 0xb0d088, emissive: 0x1d3414, emissiveIntensity: 0.7 }), 0.5);
-    this.inst(scene, pg.core, pineCore, trees.pine, cPine);
-    this.inst(scene, pg.cards, needleMat, trees.pine, cPine);
-    this.inst(scene, og.core, oakCore, trees.oak, cOak);
-    this.inst(scene, og.cards, leafMat, trees.oak, cOak);
+    card(scene, pg.core, pineCore, trees.pine, cPine);
+    card(scene, pg.cards, needleMat, trees.pine, cPine);
+    card(scene, og.core, oakCore, trees.oak, cOak);
+    card(scene, og.cards, leafMat, trees.oak, cOak);
     this.mats.needles = needleMat; this.mats.leaf = leafMat;
     all.forEach(t => addCollider({ type: 'circle', x: t.x, z: t.z, r: 0.42 * t.sx, bottom: t.y, top: t.y + 9, mat: 'wood' }));
-    G.trees = all;
+    G.trees = all; this.treeLists = { pine: trees.pine, oak: trees.oak };
 
     // desert: cacti + dry bushes
     for (let i = 0; i < 2500 && cacti.length < Math.round(70 * q); i++) {
@@ -193,7 +195,7 @@ const Nature = {
       bushes.push({ x, y: h + 0.15 * s, z, sx: s * rr(1, 1.5), sy: s * 0.75, sz: s * rr(1, 1.5), ry: rr(0, 6.28) });
       cBush.push(b === 'desert' ? new THREE.Color(rr(0.9, 1.2), rr(0.75, 0.95), rr(0.4, 0.55)) : gv(0.65, 1.1));
     }
-    const bushMat = stdMat({ map: T.leafCard, alphaTest: 0.45, side: THREE.DoubleSide });
+    const bushMat = stdMat({ map: T.leafCard, alphaTest: 0.4, alphaToCoverage: true, side: THREE.DoubleSide });
     this.inst(scene, this.leafBall([[0, 0.55, 0, 0.8]], 26, 0.62, 5), bushMat, bushes, cBush);
     this.inst(scene, this.jitter(new THREE.IcosahedronGeometry(0.62, 1).translate(0, 0.5, 0), 0.4, 99), stdMat({ map: T.leaf, color: 0x6f8a58 }), bushes, cBush, false);
     this.mats.bush = bushMat;
@@ -255,7 +257,7 @@ const Nature = {
   },
 
   swayMat(map, extra) {
-    const mat = new THREE.MeshStandardMaterial(Object.assign({ map, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 1, envMapIntensity: 0.9, color: 0xffffff, emissive: 0x1e3a10, emissiveIntensity: 0.55 }, extra || {}));
+    const mat = FastEnv.make(Object.assign({ map, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 1, envMapIntensity: 0.9, color: 0xffffff, emissive: 0x1e3a10, emissiveIntensity: 0.55 }, extra || {}));
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = this.uTime;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime;')

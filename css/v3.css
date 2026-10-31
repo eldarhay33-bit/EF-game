@@ -59,6 +59,10 @@ body.rtl .menu .tab { flex-direction: row-reverse; }
 .skin { position: relative; }
 .skin.lockd { opacity: .72; }
 .skin.lockd .sw::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+.skin .sw { height: 112px; }
+.skin .sw img.th { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.skin .sw img.th[src] { opacity: 1; }
+.skin .sw i { z-index: 1; }
 .skin .price, .owned { margin-top: 6px; font-size: 13px; font-weight: 800; color: var(--coin); }
 .owned { color: var(--good); }
 .buy { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: 6px; font-weight: 800; font-size: 14px; background: linear-gradient(180deg, #ffd45c, #e9a820); color: #1b1405; display: flex; align-items: center; justify-content: center; }
@@ -82,6 +86,9 @@ body.rtl .menu .tab { flex-direction: row-reverse; }
 .ultracard .buy { width: auto; min-width: 140px; margin-top: 10px; padding-inline: 18px; }
 .ushine { position: absolute; top: 0; bottom: 0; width: 80px; left: -120px; background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent); animation: ushine 3.2s linear infinite; pointer-events: none; }
 @keyframes ushine { to { left: 110%; } }
+.ultracard img.th { position: absolute; right: 8px; bottom: 0; height: 118%; max-width: 46%; object-fit: contain; object-position: right bottom; pointer-events: none; opacity: 0; transition: opacity .3s; }
+.ultracard img.th[src] { opacity: 1; }
+.ultracard b, .ultracard small, .ultracard em, .ultracard .req { position: relative; max-width: 62%; }
 .skin.ultra { border-color: #ffd24a; animation: ultraglow 2.4s ease-in-out infinite; }
 @keyframes ultraglow { 50% { box-shadow: 0 0 22px rgba(255,210,74,.65); } }
 .ultra-title { color: #ffd24a; text-shadow: 0 0 14px rgba(255,210,74,.5); letter-spacing: 3px; }
@@ -115,6 +122,13 @@ body.rtl .arrow { transform: scaleX(-1); }
 .brow.me { outline: 2px solid var(--gold); outline-offset: -2px; }
 .status { color: #8a96a0; }
 
+/* the level card of the lobby (no difficulty picker: src/core/skill.js) */
+.card.lvl .lvlRow { display: flex; align-items: center; gap: 12px; }
+.card.lvl .lvlRow b { font-size: 18px; color: var(--gold, #f3c64a); min-width: 96px; }
+.card.lvl .lvlRow i { flex: 1; height: 10px; border-radius: 6px; position: relative; background: linear-gradient(90deg, rgba(243,198,74,.95) var(--p), rgba(255,255,255,.14) var(--p)); }
+.card.lvl .lvlRow i::after { content: ''; position: absolute; inset: 0; border-radius: 6px; background: repeating-linear-gradient(90deg, transparent 0 calc(20% - 2px), rgba(8,12,28,.85) calc(20% - 2px) 20%); }
+.card.lvl p { margin: 8px 0 0; }
+
 /* ---------- toasts ---------- */
 #toasts { position: fixed; top: 74px; inset-inline-end: 18px; z-index: 90; display: flex; flex-direction: column; gap: 8px; pointer-events: none; align-items: flex-end; }
 .toast { background: rgba(10,16,24,.92); border: 1px solid var(--line); border-inline-start: 5px solid var(--gold); border-radius: 8px; padding: 10px 16px; min-width: 220px; max-width: 340px; box-shadow: 0 6px 20px rgba(0,0,0,.5); opacity: 0; transform: translateX(30px); transition: opacity .3s, transform .3s; }
@@ -128,6 +142,20 @@ body.rtl .toast { transform: translateX(-30px); } .toast.on { opacity: 1; transf
 #hidden.on { opacity: 1; }
 #tutBox { position: absolute; top: 90px; inset-inline-start: 20px; width: 300px; padding: 12px 16px; border-radius: 10px; background: rgba(8,14,22,.82); border: 1px solid var(--gold); display: none; pointer-events: auto; cursor: pointer; }
 #tutBox.on { display: block; }
+.tutHL { animation: tutPulse 1.1s ease-in-out infinite; }                                            /* the button / box that the tutorial step is about (modes/tutorial.js) */
+@keyframes tutPulse { 0%, 100% { box-shadow: 0 0 0 2px rgba(243,198,74,.9), 0 0 6px rgba(243,198,74,.45); } 50% { box-shadow: 0 0 0 4px rgba(255,214,90,1), 0 0 22px rgba(255,214,90,.95); } }
+/* the offer to a new player (a one-time card over the lobby) and the "looking for players" screen (src/net/matchmaking.js) */
+#tutOffer, #mmBox { position: fixed; inset: 0; z-index: 62; display: flex; align-items: center; justify-content: center; background: rgba(5,8,18,.66); pointer-events: auto; }
+#tutOffer.hidden, #mmBox.hidden { display: none; }
+#tutOffer .box, #mmBox .box { width: min(460px, 90vw); padding: 22px 24px; border-radius: 14px; background: linear-gradient(180deg, rgba(20,28,56,.98), rgba(10,14,32,.98)); border: 1px solid rgba(255,210,74,.65); box-shadow: 0 18px 60px rgba(0,0,0,.65); text-align: center; direction: inherit; }
+#tutOffer h3, #mmBox h3 { margin: 0 0 8px; font-size: 22px; color: var(--gold, #f3c64a); letter-spacing: 1px; }
+#tutOffer p, #mmBox p { margin: 0 0 16px; font-size: 15px; line-height: 1.45; color: #dbe3e9; }
+#tutOffer .acts, #mmBox .acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+#tutOffer button, #mmBox button { min-height: 44px; padding: 10px 22px; border-radius: 10px; font-size: 15px; font-weight: 800; }
+#tutOffer button.go, #mmBox button.go { background: linear-gradient(180deg, #ffd45c, #e9a820); color: #1b1405; }
+#tutOffer button.no, #mmBox button.no { background: rgba(255,255,255,.1); color: #dbe3e9; border: 1px solid rgba(255,255,255,.3); }
+#mmBox .mmBar { height: 8px; border-radius: 5px; background: rgba(255,255,255,.14); margin: 0 0 18px; overflow: hidden; }
+#mmBox .mmBar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffd45c, #e9a820); transition: width .5s linear; }
 #tutBox small { display: block; color: var(--gold); font-size: 11px; letter-spacing: 1px; } #tutBox b { display: block; font-size: 17px; margin: 3px 0; } #tutBox span { display: block; font-size: 14px; color: #dbe3e9; line-height: 1.4; } #tutBox em { display: block; margin-top: 8px; font-size: 11px; color: #8a96a0; font-style: normal; }
 
 /* ---------- end screen ---------- */
@@ -139,24 +167,24 @@ body.rtl .toast { transform: translateX(-30px); } .toast.on { opacity: 1; transf
 .padfocus { outline: 3px solid var(--gold) !important; outline-offset: 2px; box-shadow: 0 0 16px rgba(243,198,74,.6) !important; }
 
 /* ---------- touch controls ---------- */
-#touch { position: fixed; inset: 0; z-index: 20; pointer-events: none; touch-action: none; }
+#touch { position: fixed; inset: 0; z-index: 9; pointer-events: none; touch-action: none; }          /* below the HUD (z-index 10): the weapon boxes, the item bar, the minimap and the tutorial box of the HUD must be tappable, the rest of the HUD lets touches through */
 .tb { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .tb.zone { top: 0; bottom: 0; width: 50%; }
 .tb.zl { left: 0; } .tb.zr { right: 0; }
 .tb.joy { display: none; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(255,255,255,.45); background: rgba(255,255,255,.08); pointer-events: none; z-index: 2; }
 .knob { position: absolute; left: 36px; top: 36px; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.5); }
-.tb.btn { --s: 1; z-index: 3; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,.4); border: 2px solid rgba(255,255,255,.55); color: #fff; font-weight: 800; width: calc(54px * var(--s)); height: calc(54px * var(--s)); font-size: calc(22px * var(--s)); }
-.tb.btn.fire, .tb.btn.fire2 { width: calc(84px * var(--s)); height: calc(84px * var(--s)); background: rgba(220,50,50,.35); border-color: rgba(255,120,120,.8); }
-.tb.btn.fire2 { width: calc(66px * var(--s)); height: calc(66px * var(--s)); }
-.tb.btn.small { width: calc(46px * var(--s)); height: calc(46px * var(--s)); font-size: calc(18px * var(--s)); }
-.tb.btn.mini { width: 38px; height: 38px; font-size: 16px; border-radius: 10px; }
-.tb.btn.slotb { width: 40px; height: 40px; font-size: 15px; border-radius: 8px; }
+.tb.btn { --s: 1; z-index: 3; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,.4); border: 2px solid rgba(255,255,255,.55); color: #fff; font-weight: 800; width: calc(54px * var(--s) * var(--k, 1)); height: calc(54px * var(--s) * var(--k, 1)); font-size: calc(22px * var(--s) * var(--k, 1)); }
+.tb.btn.fire, .tb.btn.fire2 { width: calc(84px * var(--s) * var(--k, 1)); height: calc(84px * var(--s) * var(--k, 1)); background: rgba(220,50,50,.35); border-color: rgba(255,120,120,.8); }
+.tb.btn.fire2 { width: calc(66px * var(--s) * var(--k, 1)); height: calc(66px * var(--s) * var(--k, 1)); }
+.tb.btn.small { width: calc(46px * var(--s) * var(--k, 1)); height: calc(46px * var(--s) * var(--k, 1)); font-size: calc(18px * var(--s) * var(--k, 1)); }
+.tb.btn.mini { width: calc(38px * var(--k, 1)); height: calc(38px * var(--k, 1)); font-size: calc(16px * var(--k, 1)); border-radius: 10px; }
+.tb.btn.slotb { width: calc(40px * var(--k, 1)); height: calc(40px * var(--k, 1)); font-size: calc(15px * var(--k, 1)); border-radius: 8px; }
 .tb.btn.interact { background: rgba(243,198,74,.4); border-color: var(--gold); }
 .tb.btn.on { background: rgba(255,255,255,.4); transform: scale(.93); }
 
 /* ---------- small screens ---------- */
 .topnav { flex-wrap: wrap; row-gap: 0; padding-bottom: 0; } .tabs { order: 3; flex-basis: 100%; } .tab { inset: 104px 0 0 0; }
-@media (max-width: 1100px) { .tabs button { padding: 8px 8px; font-size: 13px; } .logo { display: none; } .ctlwrap { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1100px) { .tabs button { padding: 8px 8px; font-size: 13px; } .logo .lt { display: none; } .logo .emb { height: 32px; } .ctlwrap { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 700px), (max-height: 520px) {
   .topnav { padding: 8px 10px; flex-wrap: wrap; gap: 6px; } .tab { inset: 100px 0 0 0; padding: 6px 10px 20px; gap: 10px; overflow: auto; }
   .side { width: 46%; } .side.wide, .side.wide2 { width: 54%; } .play { font-size: 20px; padding: 12px; } .profile { display: none; }
@@ -204,3 +232,46 @@ body.rtl .toast { transform: translateX(-30px); } .toast.on { opacity: 1; transf
 .pk.out { opacity: 0; transform: translateY(-8px); }
 @keyframes pkin { from { opacity: 0; transform: translateY(8px); } }
 @media (max-width: 1100px) { #consum .it { width: 34px; height: 34px; } }
+/* ---------- global board ---------- */
+.rankline { font-size: 18px; font-weight: 900; color: var(--gold); margin: 4px 0; min-height: 1.2em; }
+.status.live { color: var(--good); font-weight: 700; }
+.brow span:nth-child(2) { display: flex; flex-direction: column; line-height: 1.15; } .brow small { font-size: 10px; color: #8a96a0; font-weight: 400; }
+.brow span:first-child { font-weight: 800; text-align: center; }
+.card .ghostbtn.small { margin-inline-start: 8px; }
+
+/* Phantom-X lock-on ring */
+#lockRing { position: absolute; left: 0; top: 0; width: 0; height: 0; display: none; pointer-events: none; z-index: 6; }
+#lockRing i { position: absolute; left: -34px; top: -34px; width: 68px; height: 68px; border: 2px solid #35f0ff; border-radius: 50%; box-shadow: 0 0 16px #35f0ff, inset 0 0 14px rgba(53, 240, 255, .35); animation: lockPulse .45s ease-in-out infinite alternate; }
+#lockRing i::before { content: ''; position: absolute; left: 50%; top: -10px; width: 2px; height: 120%; margin-left: -1px; background: linear-gradient(#35f0ff 0 14%, transparent 14% 86%, #35f0ff 86%); }
+#lockRing i::after { content: 'LOCK'; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 8px; font: 800 10px/1 'Segoe UI', Arial, sans-serif; letter-spacing: 3px; color: #35f0ff; text-shadow: 0 0 8px #35f0ff; }
+@keyframes lockPulse { from { transform: scale(1); } to { transform: scale(1.14); } }
+
+/* the logo (assets/brand), the credit line, the install banner and the About card */
+#loading h1 { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; letter-spacing: 0; text-shadow: none; }
+#loading .brandLogo { width: min(560px, 84vw); height: auto; filter: drop-shadow(0 8px 28px rgba(0, 0, 0, .55)); }
+.credit { font-size: 13px; letter-spacing: 1.5px; color: #9fb0c6; opacity: .95; }
+.credit.big { margin-top: 14px; font-size: 13px; text-align: center; color: #c9d6ea; }
+.credit.foot { position: fixed; left: 16px; bottom: 8px; z-index: 2; pointer-events: none; text-transform: none; letter-spacing: 1px; font-size: 11px; opacity: .55; }
+#rotate .rotLogo { width: min(300px, 62vw); height: auto; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo .emb { height: 38px; width: auto; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .5)); }
+#installBar { position: fixed; z-index: 55; left: 50%; bottom: 44px; transform: translateX(-50%); width: min(640px, 92vw); display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: rgba(12, 18, 48, .94); border: 1px solid rgba(255, 210, 74, .6); box-shadow: 0 10px 34px rgba(0, 0, 0, .55); font-size: 13px; pointer-events: auto; direction: inherit; }
+#installBar.hidden { display: none; }
+#installBar span { flex: 1; line-height: 1.35; }
+#installBar button { padding: 8px 14px; font-size: 13px; border-radius: 8px; white-space: nowrap; background: var(--gold, #f3c64a); color: #17140a; font-weight: 800; }
+#installBar button.ghost { background: rgba(255, 255, 255, .12); color: #fff; font-weight: 600; }
+.about { text-align: center; }
+.about .aboutLogo img { width: min(380px, 92%); height: auto; display: block; margin: 6px auto; }
+.about .aboutVer { font-weight: 800; color: var(--gold, #f3c64a); letter-spacing: 2px; margin: 2px 0 12px; }
+.about .aboutBtns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.about .aboutBtns button { padding: 9px 18px; border-radius: 9px; background: rgba(255, 255, 255, .12); color: #fff; border: 1px solid rgba(255, 255, 255, .32); font-weight: 700; font-size: 14px; cursor: pointer; }
+.about .aboutBtns button:hover { background: rgba(255, 255, 255, .22); }
+.about .aboutBtns button#aboutInstall { background: var(--gold, #f3c64a); color: #17140a; border-color: transparent; }
+.about .aboutStatus { min-height: 20px; margin-top: 8px; color: #b9c4cc; font-size: 13px; }
+.about .aboutInstalled { color: var(--good, #5fd14a); margin-top: 6px; font-size: 13px; }
+.about .aboutInstalled.hidden, .about button.hidden { display: none; }
+/* Bike trick callouts */
+.trick { position: absolute; left: 50%; top: 27%; transform: translate(-50%, 18px) scale(.6); opacity: 0; pointer-events: none; z-index: 7; white-space: nowrap; font: 900 clamp(22px, 4.2vw, 44px)/1 'Segoe UI', Arial, sans-serif; letter-spacing: 3px; color: #ffe27a; text-shadow: 0 0 18px rgba(255, 190, 60, .85), 0 3px 0 rgba(0, 0, 0, .55); transition: transform .22s cubic-bezier(.2, 1.6, .4, 1), opacity .22s; }
+.trick.on { transform: translate(-50%, 0) scale(1); opacity: 1; }
+.trick.out { transform: translate(-50%, -26px) scale(1.05); opacity: 0; transition: transform .55s ease-in, opacity .55s ease-in; }
+.trick.bad { color: #ff6b5e; font-size: clamp(16px, 2.6vw, 26px); text-shadow: 0 0 14px rgba(255, 60, 40, .7), 0 2px 0 rgba(0, 0, 0, .55); }

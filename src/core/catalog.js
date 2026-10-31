@@ -45,13 +45,17 @@ const CATALOG = {
     { id: 'damage', stat: 'damage', goals: [1000, 10000, 50000, 200000, 1000000], m: 1 },
     { id: 'insaneKills', stat: 'insaneKills', goals: [10, 50, 200, 600, 2000], m: 2 },
     { id: 'ghost', stat: 'ghostWins', goals: [1, 3, 6, 12, 25], m: 3, special: true },
-    { id: 'distance', stat: 'distance', goals: [1000, 10000, 50000, 200000, 1000000], m: 1 }
+    { id: 'distance', stat: 'distance', goals: [1000, 10000, 50000, 200000, 1000000], m: 1 },
+    { id: 'flips', stat: 'flips', goals: [1, 10, 40, 120, 300], m: 1.5 },
+    { id: 'flipCombo', stat: 'maxFlipJump', kind: 'max', goals: [1, 2, 3, 4, 5], m: 2, special: true },
+    { id: 'airtime', stat: 'airTime', goals: [10, 60, 200, 600, 1800], m: 1 }
   ],
   missions: [
     { id: 'kills', stat: 'kills', g: [3, 8, 15] }, { id: 'wins', stat: 'wins', g: [1, 2, 3] }, { id: 'play', stat: 'games', g: [2, 4, 6] },
     { id: 'headshots', stat: 'headshots', g: [3, 8, 15] }, { id: 'explosive', stat: 'explosiveKills', g: [1, 3, 5] }, { id: 'bike', stat: 'bikeKills', g: [1, 2, 4] },
     { id: 'survive', stat: 'maxSurvive', kind: 'max', g: [150, 240, 330] }, { id: 'grass', stat: 'grassTime', g: [30, 75, 150] }, { id: 'swim', stat: 'swimDist', g: [40, 120, 250] },
-    { id: 'supply', stat: 'supply', g: [1, 2, 3] }, { id: 'damage', stat: 'damage', g: [400, 1200, 2500] }, { id: 'duel', stat: 'duelWins', g: [1, 2, 3] }
+    { id: 'supply', stat: 'supply', g: [1, 2, 3] }, { id: 'damage', stat: 'damage', g: [400, 1200, 2500] }, { id: 'duel', stat: 'duelWins', g: [1, 2, 3] },
+    { id: 'flips', stat: 'flips', g: [1, 3, 6] }, { id: 'flipCombo', stat: 'maxFlipJump', kind: 'max', g: [1, 2, 3] }, { id: 'airtime', stat: 'airTime', g: [6, 15, 30] }
   ],
   missionReward: [{ coins: 100, pts: 10 }, { coins: 260, pts: 25 }, { coins: 620, pts: 60 }]
 };

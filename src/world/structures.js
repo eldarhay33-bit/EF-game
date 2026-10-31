@@ -5,10 +5,13 @@ const SM = {
   concrete:     { map: 'concrete', n: 'concreteN', color: 0xbdbab2, rough: 0.92, tile: 3, cm: 'concrete' },
   concreteDark: { map: 'concrete', n: 'concreteN', color: 0x7e7c76, rough: 0.92, tile: 3, cm: 'concrete' },
   concreteWarm: { map: 'concrete', n: 'concreteN', color: 0xc9bca0, rough: 0.92, tile: 3, cm: 'concrete' },
-  plasterA:     { map: 'plaster', color: 0xe8dfca, rough: 0.95, tile: 2.5, cm: 'concrete' },
-  plasterB:     { map: 'plaster', color: 0xdcc88e, rough: 0.95, tile: 2.5, cm: 'concrete' },
-  plasterC:     { map: 'plaster', color: 0xb9c2b0, rough: 0.95, tile: 2.5, cm: 'concrete' },
-  plasterD:     { map: 'plaster', color: 0xc98a6c, rough: 0.95, tile: 2.5, cm: 'concrete' },
+  plasterA:     { map: 'plaster', n: 'plasterN', color: 0xe8dfca, rough: 0.95, tile: 2.5, cm: 'concrete' },
+  plasterB:     { map: 'plaster', n: 'plasterN', color: 0xdcc88e, rough: 0.95, tile: 2.5, cm: 'concrete' },
+  plasterC:     { map: 'plaster', n: 'plasterN', color: 0xb9c2b0, rough: 0.95, tile: 2.5, cm: 'concrete' },
+  plasterD:     { map: 'plaster', n: 'plasterN', color: 0xc98a6c, rough: 0.95, tile: 2.5, cm: 'concrete' },
+  brickRed:     { map: 'brick', n: 'brickN', color: 0xffffff, rough: 0.9, tile: 2.5, cm: 'concrete' },
+  brickDark:    { map: 'brick', n: 'brickN', color: 0x9b8d8a, rough: 0.9, tile: 2.5, cm: 'concrete' },
+  brickPaint:   { map: 'brick', n: 'brickN', color: 0xe6dccb, rough: 0.92, tile: 2.5, cm: 'concrete' },
   sandstone:    { map: 'plaster', n: 'concreteN', color: 0xcaa56d, rough: 0.97, tile: 3, cm: 'concrete' },
   wood:         { map: 'wood', n: 'woodN', color: 0xcfb58f, rough: 0.85, tile: 2.2, cm: 'wood' },
   woodDark:     { map: 'wood', n: 'woodN', color: 0x6e5238, rough: 0.85, tile: 2.2, cm: 'wood' },
@@ -22,9 +25,9 @@ const SM = {
   olive:        { map: 'metal', n: 'metalN', color: 0x59613f, rough: 0.6, metal: 0.45, tile: 2.4, cm: 'metal' },
   steel:        { map: 'concrete', color: 0x6f7378, rough: 0.4, metal: 0.85, tile: 3, cm: 'metal' },
   rubber:       { map: 'noiseGray', color: 0x1c1c1c, rough: 0.95, tile: 1, cm: 'metal' },
-  roofRed:      { map: 'roof', color: 0xb85a40, rough: 0.8, tile: 2.2, cm: 'concrete' },
-  roofGray:     { map: 'roof', color: 0x70747a, rough: 0.8, tile: 2.2, cm: 'concrete' },
-  roofBrown:    { map: 'roof', color: 0x6b4a38, rough: 0.8, tile: 2.2, cm: 'concrete' },
+  roofRed:      { map: 'roof', n: 'roofN', color: 0xb85a40, rough: 0.8, tile: 2.2, cm: 'concrete' },
+  roofGray:     { map: 'roof', n: 'roofN', color: 0x70747a, rough: 0.8, tile: 2.2, cm: 'concrete' },
+  roofBrown:    { map: 'roof', n: 'roofN', color: 0x6b4a38, rough: 0.8, tile: 2.2, cm: 'concrete' },
   sandbag:      { map: 'plaster', n: 'concreteN', color: 0xa89a74, rough: 1, tile: 1.4, cm: 'concrete' },
   hay:          { map: 'grass', color: 0xd9c46a, rough: 1, tile: 1.5, cm: 'wood' },
   canvas:       { map: 'plaster', color: 0x6c7351, rough: 1, tile: 2, cm: 'wood' },
@@ -42,6 +45,35 @@ const SM = {
   torch:        { color: 0x140a02, rough: 0.5, tile: 1, cm: 'wood', emis: 0xff8a2a }
 };
 
+// A box with its 12 edges and 8 corners chamfered by b metres (44 triangles). The chamfer catches the sun and makes every prop and wall edge read as a solid object instead of a paper box.
+function chamferBox(w, h, d, b) {
+  const S = [w / 2, h / 2, d / 2]; b = Math.min(b, Math.min(...S) * 0.9);
+  const pos = [], nor = [];
+  const tri = (a, c, e) => {
+    let ux = c[0] - a[0], uy = c[1] - a[1], uz = c[2] - a[2], vx = e[0] - a[0], vy = e[1] - a[1], vz = e[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    if (nx * (a[0] + c[0] + e[0]) + ny * (a[1] + c[1] + e[1]) + nz * (a[2] + c[2] + e[2]) < 0) { const t = c; c = e; e = t; nx = -nx; ny = -ny; nz = -nz; }
+    const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    for (const q of [a, c, e]) { pos.push(q[0], q[1], q[2]); nor.push(nx, ny, nz); }
+  };
+  const pt = (k, vk, i, vi, j, vj) => { const p = [0, 0, 0]; p[k] = vk; p[i] = vi; p[j] = vj; return p; };
+  for (let k = 0; k < 3; k++) for (const s of [-1, 1]) {                       // 6 faces
+    const i = (k + 1) % 3, j = (k + 2) % 3, a = S[i] - b, c = S[j] - b;
+    const p00 = pt(k, s * S[k], i, -a, j, -c), p10 = pt(k, s * S[k], i, a, j, -c), p11 = pt(k, s * S[k], i, a, j, c), p01 = pt(k, s * S[k], i, -a, j, c);
+    tri(p00, p10, p11); tri(p00, p11, p01);
+  }
+  for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) for (const si of [-1, 1]) for (const sj of [-1, 1]) {   // 12 edges
+    const k = 3 - i - j, kk = S[k] - b;
+    const A0 = pt(k, -kk, i, si * S[i], j, sj * (S[j] - b)), A1 = pt(k, kk, i, si * S[i], j, sj * (S[j] - b)), B1 = pt(k, kk, i, si * (S[i] - b), j, sj * S[j]), B0 = pt(k, -kk, i, si * (S[i] - b), j, sj * S[j]);
+    tri(A0, A1, B1); tri(A0, B1, B0);
+  }
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1])                                      // 8 corners
+    tri([sx * S[0], sy * (S[1] - b), sz * (S[2] - b)], [sx * (S[0] - b), sy * S[1], sz * (S[2] - b)], [sx * (S[0] - b), sy * (S[1] - b), sz * S[2]]);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(pos.length / 3 * 2), 2));
+  return g;
+}
+
 const Structures = {
   scene: null, q: {}, mats: {},
 
@@ -50,7 +82,7 @@ const Structures = {
   mat(key) {
     if (this.mats[key]) return this.mats[key];
     const d = SM[key], T = Tex.t;
-    const m = new THREE.MeshStandardMaterial({
+    const m = FastEnv.make({
       map: T[d.map] || null, normalMap: d.n ? T[d.n] : null, color: d.color, roughness: d.rough, metalness: d.metal || 0,
       envMapIntensity: d.metal ? 1.1 : 0.55
     });
@@ -92,7 +124,7 @@ const Structures = {
       for (const [ox, oz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) low = Math.min(low, terrainHeight(cx + ox * w / 2, cz + oz * d / 2));
       y = low - 0.3; h += terrainHeight(cx, cz) - y;
     }
-    const geo = new THREE.BoxGeometry(w, h, d), m = new THREE.Matrix4();
+    const geo = (o.bevel === false || Math.min(w, h, d) < 0.12) ? new THREE.BoxGeometry(w, h, d) : chamferBox(w, h, d, Math.min(0.045, Math.min(w, h, d) * 0.2)), m = new THREE.Matrix4();
     m.compose(new THREE.Vector3(cx, y + h / 2, cz), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, o.rotY || 0, 0)), new THREE.Vector3(1, 1, 1));
     this.add(geo, key, m);
     if (!o.noCollide) addCollider({ type: 'box', minX: cx - w / 2, maxX: cx + w / 2, minZ: cz - d / 2, maxZ: cz + d / 2, bottom: y, top: y + h, walkable: !!o.walkable, mat: o.cm || SM[key].cm });
@@ -101,7 +133,7 @@ const Structures = {
 
   cyl(cx, cz, r, h, key, o = {}) {
     const y = o.y !== undefined ? o.y : terrainHeight(cx, cz) - 0.25, hh = o.y !== undefined ? h : h + 0.25;
-    const geo = new THREE.CylinderGeometry(o.rt !== undefined ? o.rt : r, r, hh, o.seg || 14), m = new THREE.Matrix4();
+    const geo = new THREE.CylinderGeometry(o.rt !== undefined ? o.rt : r, r, hh, o.seg || (r > 1 ? 32 : 20)), m = new THREE.Matrix4();
     m.makeTranslation(cx, y + hh / 2, cz);
     this.add(geo, key, m);
     if (!o.noCollide) addCollider({ type: 'circle', x: cx, z: cz, r, bottom: y, top: y + hh, mat: o.cm || SM[key].cm });
@@ -177,8 +209,15 @@ const Structures = {
       // window frames + glass, door frame and an ajar door
       for (const o of op) {
         const isDoor = o.y0 === 0, cx2 = axis === 'x' ? x + o.c : x, cz2 = axis === 'x' ? z : z + o.c, w = axis === 'x' ? o.w : t, d = axis === 'x' ? t : o.w;
-        const fx = (a, b, c, e, f, g) => this.box(cx2 + a, cz2 + b, c, e, f, 'woodDark', { y: fl + g, noCollide: true });
+        const fx = (a, b, c, e, f, g, k) => this.box(cx2 + a, cz2 + b, c, e, f, k || 'woodDark', { y: fl + g, noCollide: true });
         const th = 0.07, hh = o.y1 - o.y0;
+        {
+          const ow = (s === '+z' || s === '+x') ? 1 : -1, kk = (Math.round(cx2 * 3 + cz2 * 5) & 1) ? 'woodRed' : 'woodDark';
+          if (!isDoor) {                                                                                     // sill + two shutters
+            if (axis === 'x') { fx(0, ow * (t / 2 + 0.07), o.w + 0.32, 0.22, 0.07, o.y0 - 0.12, 'wood'); fx(-o.w / 2 - 0.3, ow * (t / 2 + 0.03), 0.5, 0.05, hh + 0.06, o.y0 - 0.03, kk); fx(o.w / 2 + 0.3, ow * (t / 2 + 0.03), 0.5, 0.05, hh + 0.06, o.y0 - 0.03, kk); }
+            else { fx(ow * (t / 2 + 0.07), 0, 0.22, o.w + 0.32, 0.07, o.y0 - 0.12, 'wood'); fx(ow * (t / 2 + 0.03), -o.w / 2 - 0.3, 0.05, 0.5, hh + 0.06, o.y0 - 0.03, kk); fx(ow * (t / 2 + 0.03), o.w / 2 + 0.3, 0.05, 0.5, hh + 0.06, o.y0 - 0.03, kk); }
+          } else if (axis === 'x') fx(0, ow * (t / 2 + 0.3), o.w + 0.5, 0.7, 0.37, -0.25, 'concreteWarm'); else fx(ow * (t / 2 + 0.3), 0, 0.7, o.w + 0.5, 0.37, -0.25, 'concreteWarm');   // doorstep
+        }
         if (axis === 'x') { fx(0, 0, o.w + 0.14, t + 0.06, th, o.y1); if (!isDoor) fx(0, 0, o.w + 0.14, t + 0.06, th, o.y0 - th); fx(-o.w / 2 - th / 2, 0, th, t + 0.06, hh, o.y0); fx(o.w / 2 + th / 2, 0, th, t + 0.06, hh, o.y0); }
         else { fx(0, 0, t + 0.06, o.w + 0.14, th, o.y1); if (!isDoor) fx(0, 0, t + 0.06, o.w + 0.14, th, o.y0 - th); fx(0, -o.w / 2 - th / 2, t + 0.06, th, hh, o.y0); fx(0, o.w / 2 + th / 2, t + 0.06, th, hh, o.y0); }
         if (!isDoor) this.box(cx2, cz2, w * 0.98, d * 0.3, hh, 'glass', { y: fl + o.y0, noCollide: true });
@@ -194,7 +233,14 @@ const Structures = {
     side('+x', 'z', d - 2 * t, cx + w / 2 - t / 2, cz); side('-x', 'z', d - 2 * t, cx - w / 2 + t / 2, cz);
     this.box(cx, cz, w + 0.2, d + 0.2, 0.3, wk, { y: fl + H });                       // ceiling slab (collider)
     this.gable(cx, cz, w, d, fl + H + 0.3, Math.min(w, d) * 0.28, rk, w >= d);
-    if (w > 7.5 && o.chimney !== false) this.box(cx + w * 0.28 * (w >= d ? 1 : 0), cz + d * 0.28 * (w >= d ? 0 : 1), 0.7, 0.7, Math.min(w, d) * 0.28 + 1.4, 'concreteDark', { y: fl + H, noCollide: true });
+    {                                                                                                                  // ridge cap
+      const rise = Math.min(w, d) * 0.28, ry = fl + H + 0.3 + rise - 0.04;
+      if (w >= d) this.box(cx, cz, w + 0.9, 0.26, 0.16, 'concreteDark', { y: ry, noCollide: true }); else this.box(cx, cz, 0.26, d + 0.9, 0.16, 'concreteDark', { y: ry, noCollide: true });
+    }
+    if (w > 7.5 && o.chimney !== false) {                                                                                // brick chimney with a stone cap
+      const chx = cx + w * 0.28 * (w >= d ? 1 : 0), chz = cz + d * 0.28 * (w >= d ? 0 : 1), chh = Math.min(w, d) * 0.28 + 1.4;
+      this.box(chx, chz, 0.7, 0.7, chh, 'brickRed', { y: fl + H, noCollide: true }); this.box(chx, chz, 0.95, 0.95, 0.14, 'concreteDark', { y: fl + H + chh, noCollide: true });
+    }
     // furniture
     this.box(cx + w * 0.22, cz - d * 0.2, 1.4, 0.8, 0.8, 'wood', { y: fl, walkable: true });
     this.box(cx - w * 0.3, cz - d * 0.28, 0.6, 1.6, 1.8, 'woodDark', { y: fl });
@@ -203,18 +249,24 @@ const Structures = {
     this.spot(cx - w * 0.1, cz + d * 0.05, o.tier || 1, fl);
   },
 
-  crate(cx, cz, s, key = 'wood') { return this.box(cx, cz, s, s, s, key, { walkable: true }); },
+  // wooden crate with corner posts and a cross brace
+  crate(cx, cz, s, key = 'wood') { const r = this.box(cx, cz, s, s, s, key, { walkable: true }); this.crateTrim(cx, cz, s, r.y); return r; },
+  crateTrim(cx, cz, s, y) {
+    const q = s / 2 - 0.045;
+    for (const [ox, oz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) this.box(cx + ox * q, cz + oz * q, 0.1, 0.1, s + 0.02, 'woodDark', { y: y - 0.01, noCollide: true, bevel: false });
+    this.box(cx, cz, s + 0.03, s + 0.03, 0.09, 'woodDark', { y: y + s * 0.5 - 0.045, noCollide: true, bevel: false });
+  },
 
   crateStack(cx, cz, n, key = 'wood') {
     const base = terrainHeight(cx, cz);
     for (let i = 0; i < n; i++) {
       const s = 0.9 + ((i * 37) % 5) * 0.1, x = cx + (i % 3) * 1.5, z = cz + Math.floor(i / 3) * 1.5;
-      this.box(x, z, s, s, s, key, { y: terrainHeight(x, z), walkable: true, rotY: (i % 3) * 0.15 });
+      const yy = terrainHeight(x, z); this.box(x, z, s, s, s, key, { y: yy, walkable: true }); this.crateTrim(x, z, s, yy);
     }
     if (n >= 4) this.box(cx + 0.7, cz + 0.2, 0.9, 0.9, 0.9, key, { y: base + 1.0, walkable: true });
   },
 
-  barrel(cx, cz, key = 'metalRed') { this.cyl(cx, cz, 0.3, 0.95, key, { seg: 12 }); },
+  barrel(cx, cz, key = 'metalRed') { this.cyl(cx, cz, 0.3, 0.95, key, { seg: 18 }); const y = terrainHeight(cx, cz); for (const k of [0.2, 0.7]) this.cyl(cx, cz, 0.318, 0.05, 'steel', { y: y + k, seg: 18, noCollide: true }); },
 
   stairs(x, z, axis, dir, steps, width, len, key, base, rise = 0.6) {
     for (let i = 0; i < steps; i++) {

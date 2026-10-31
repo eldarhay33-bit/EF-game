@@ -47,19 +47,27 @@
     me.appendChild(h('div', 'big', `<i class="pt"></i> ${I18n.n(Profile.d.points)}`));
     me.appendChild(h('p', '', T(ultraOwned ? (ultraOn ? 'board.ready' : 'board.equip') : 'board.need')));
     const sub = h('button', 'buy', T('board.submit')); sub.disabled = !(ultraOwned && ultraOn);
-    sub.onclick = async () => { sub.disabled = true; const r = await Online.submitScore(); HUD.toast(T(r.ok ? 'board.sent' : 'board.fail'), '', r.ok ? 0x5fd14a : 0xff6a6a); load(); sub.disabled = false; };
-    me.appendChild(sub); b.appendChild(me);
+    sub.onclick = async () => { sub.disabled = true; const r = await Online.submitScore(true); HUD.toast(T(r.ok ? 'board.sent' : 'board.fail'), '', r.ok ? 0x5fd14a : 0xff6a6a); await load(); sub.disabled = !(ultraOwned && ultraOn); };
+    const rank = h('p', 'rankline', ''); me.appendChild(rank);
+    me.appendChild(sub);
+    const rf = h('button', 'ghostbtn small', T('board.refresh')); rf.onclick = () => { Sound.ui(); load(); }; me.appendChild(rf); b.appendChild(me);
     const tip = h('div', 'card'); tip.appendChild(h('h3', '', T('board.how'))); tip.appendChild(h('p', 'small', T('board.howText'))); b.appendChild(tip);
     async function load() {
-      status.textContent = T('board.loading');
+      if (!document.body.contains(el) || (Menu.tab !== 'board' && tbl.childElementCount)) return;
+      if (!tbl.childElementCount) status.textContent = T('board.loading');
       const res = await Online.fetchBoard();
-      status.textContent = T(res.online ? 'board.online' : 'board.offline');
+      status.textContent = T(res.online ? 'board.online' : res.stale ? 'board.stale' : 'board.offline') + (res.online ? ' · ' + res.list.length + '/100' : '');
+      status.classList.toggle('live', !!res.online);
+      rank.textContent = res.me >= 0 ? T('board.rank', { n: res.me + 1 }) : (ultraOn ? T('board.notTop') : '');
       tbl.innerHTML = '';
       const head = h('div', 'brow bh', `<span>#</span><span>${T('board.player')}</span><span>${T('board.pts')}</span>`); tbl.appendChild(head);
       if (!res.list.length) tbl.appendChild(h('p', 'small', T('board.empty')));
-      res.list.slice(0, 100).forEach((e, i) => tbl.appendChild(h('div', 'brow' + (i < 3 ? ' top' + (i + 1) : '') + (e.name === Settings.get('name') ? ' me' : ''), `<span>${i + 1}</span><span>${(e.name || '?').replace(/[<>&]/g, '')}</span><span>${I18n.n(e.points)}</span>`)));
+      const medal = ['🥇', '🥈', '🥉'];
+      res.list.slice(0, 100).forEach((e, i) => tbl.appendChild(h('div', 'brow' + (i < 3 ? ' top' + (i + 1) : '') + (i === res.me ? ' me' : ''), `<span>${i < 3 ? medal[i] : i + 1}</span><span>${(e.name || '?').replace(/[<>&]/g, '')}<small>${T('wallet.lvl')} ${e.lvl || 1}</small></span><span>${I18n.n(e.points)}</span>`)));
     }
     el.appendChild(a); el.appendChild(b); load();
+    // the table stays fresh while it is on screen
+    clearInterval(Menu.boardTimer); Menu.boardTimer = setInterval(() => { if (Menu.tab === 'board' && G.state === 'menu') load(); }, 30000);
   };
   Menu.onTab = Menu.onTab || {};
   Menu.onTab.challenges = () => Menu.builders.challenges(document.getElementById('tab-challenges'));

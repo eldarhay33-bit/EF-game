@@ -2,7 +2,7 @@
 // Topology: a star around the party host. Every player simulates and shoots for themselves (shooter-side hit detection, the victim applies damage).
 // In co-op the host also runs the bots; guests see them as "puppets" driven by host snapshots. See docs/ONLINE.md for the message list.
 const PHASES = ['plane', 'freefall', 'glide', 'ground', 'riding'];
-const PARTY_MAX = { duo: 2, trio: 3, squad: 4, duel: 2 };
+const PARTY_MAX = { duo: 2, trio: 3, squad: 4, duel: 2, pbr: 20 };          // pbr: a public battle royale found by the lobby server (src/net/matchmaking.js): everybody against everybody, the bots fill the rest
 const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
 
 // An actor controlled over the network (a friend, the duel opponent or a host bot seen on a guest). Quacks like Bot for Combat, Projectiles and bot perception.
@@ -13,8 +13,8 @@ class Remote {
     this.alive = true; this.health = 100; this.maxHealth = 100; this.shield = 0; this.crouch = false; this.riding = false; this.bike = null; this.onGround = true; this.state = 'ground'; this.dropPhase = 'free'; this.phase = 'plane';
     this.speed = 0; this.walkDir = 1; this.slots = []; this.cur = 0; this.reloadT = 0; this.lastFired = -99; this.recoil = 0; this.meds = { small: 0, big: 0 }; this.enemy = null;
     this.wkey = ''; this.gunKey = ''; this.chute = null; this.seen = false; this.deathT = 25;
-    this.skinId = o.skin || 'woodland';
-    this.rig = Character.build(this.skinId, 0); this.rig.root.visible = false; G.scene.add(this.rig.root);
+    this.skinId = o.skin || 'recruit'; this.lo = o.lo || null;
+    this.rig = Character.build(this.skinId, 0, { loadout: this.lo }); this.rig.root.visible = false; G.scene.add(this.rig.root);          // (the equipment the other player wears, from their hello)
   }
   weapon() { const s = this.slots[this.cur]; return s ? s.w : null; }
   eye() { return new THREE.Vector3(this.pos.x, this.pos.y + (this.crouch ? 1.15 : 1.6), this.pos.z); }
@@ -65,7 +65,7 @@ const Net = {
   emit(ev, a) { for (const f of (this.listeners[ev] || []).slice()) { try { f(a); } catch (e) { console.error(e); } } },
   T(k, p) { return I18n.t(k, p); },
   sanitize(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16); },
-  myInfo() { return { n: String(Settings.get('name') || 'Player').slice(0, 14), skin: Settings.get('skin') }; },
+  myInfo() { const L = Profile.d.loadout; return { n: String(Settings.get('name') || 'Player').slice(0, 14), skin: Settings.get('skin'), lo: { vest: L.vest | 0, helmet: L.helmet | 0, boots: L.boots | 0, gloves: L.gloves | 0, pack: L.pack | 0 }, r: Math.round(Skill.rating()) }; },
   say(title, sub, col) { if (typeof HUD !== 'undefined') HUD.toast(title, sub || '', col); },
 
   // ---------- connection ----------
@@ -173,6 +173,10 @@ const Net = {
       const map = Profile.d.loadout.duelMap || 'colosseum';
       for (const u of guests) this.send(u, { t: 'go', mode: 'duel', map, p: P });
       this.beginDuel(map, true, guests[0]);
+    } else if (P.mode === 'pbr') {                                                                      // public battle royale: everybody for themselves, the host runs the bots (20 places in all)
+      for (const u of guests) this.send(u, { t: 'go', mode: 'pbr', p: P });
+      this.session = { kind: 'coop', host: true }; this.ffa = true;
+      Game.start({ mode: 'br', net: { role: 'host', ffa: true, botCount: Math.max(0, BOT_COUNT + 1 - P.members.length), rating: P.br } });
     } else {
       for (const u of guests) this.send(u, { t: 'go', mode: 'coop', p: P });
       this.session = { kind: 'coop', host: true };
@@ -188,7 +192,7 @@ const Net = {
 
   // ---------- incoming messages ----------
   handle(m, u) { const H = this['on_' + m.t]; if (H) H.call(this, m, u); },
-  on_hi(m, u) { this.info[u] = { n: m.n, skin: m.skin }; this.emit('hi', u); },
+  on_hi(m, u) { this.info[u] = { n: m.n, skin: m.skin, lo: m.lo || null, r: m.r }; this.emit('hi', u); },
   on_inv(m, u) {
     if (G.state !== 'menu' || this.party || this.invite || this.session) return this.send(u, { t: 'no', busy: 1 });
     this.invite = { u, mode: m.mode, n: m.n || u }; this.emit('invite');
@@ -197,8 +201,10 @@ const Net = {
   on_join(m, u) {
     const P = this.party; if (!P || P.host !== this.user || this.session) return this.send(u, { t: 'no', busy: 1 });
     if (P.members.length >= PARTY_MAX[P.mode]) { this.send(u, { t: 'no', full: 1 }); return this.say(this.T('party.full'), '', 0xff6a6a); }
-    if (!P.members.some(x => x.u === u)) P.members.push({ u, n: m.n, skin: m.skin });
-    this.say(this.T('party.joined', { name: m.n }), '', 0x5fd14a); this.pushParty();
+    if (!P.members.some(x => x.u === u)) P.members.push({ u, n: m.n, skin: m.skin, lo: m.lo || null, r: m.r });
+    if (!P.auto) this.say(this.T('party.joined', { name: m.n }), '', 0x5fd14a);
+    this.pushParty();
+    if (P.auto && P.members.length >= P.expect) this.autoStart();                                       // a match from the lobby server: start as soon as everybody who was promised is here
   },
   on_leave(m, u) { this.memberGone(u); },
   on_party(m, u) {
@@ -210,6 +216,7 @@ const Net = {
     this.party = m.p || this.party; this.hostUser = u;
     if (m.mode === 'duel') this.beginDuel(m.map, false, u);
     else {
+      this.ffa = m.mode === 'pbr';
       this.session = { kind: 'coop', host: false }; this.isHost = false; this.say(this.T('net.waiting', { name: this.nameOf(u) }), '', 0xffb84a);
       const s = this.session; setTimeout(() => { if (this.session === s && !this.active) this.session = null; }, 15000);
     }
@@ -220,7 +227,8 @@ const Net = {
     const i = P.members.findIndex(x => x.u === u); if (i >= 0) { this.say(this.T('party.left', { name: P.members[i].n }), '', 0xffb84a); P.members.splice(i, 1); this.pushParty(); }
   },
   nameOf(u) { const P = this.party, m = P && P.members.find(x => x.u === u); return m ? m.n : (this.info[u] && this.info[u].n) || u; },
-  skinOf(u) { const P = this.party, m = P && P.members.find(x => x.u === u); return m ? m.skin : (this.info[u] && this.info[u].skin) || 'woodland'; },
+  skinOf(u) { const P = this.party, m = P && P.members.find(x => x.u === u); return m ? m.skin : (this.info[u] && this.info[u].skin) || 'recruit'; },
+  loOf(u) { const P = this.party, m = P && P.members.find(x => x.u === u); return (m && m.lo) || (this.info[u] && this.info[u].lo) || null; },
 
   dropped(u) {
     this.emit('conn');
@@ -235,7 +243,7 @@ const Net = {
       const r = this.remotes[u];
       if (r) { this.say(this.T('net.disconnected', { name: r.name }), '', 0xff6a6a); if (r.alive) r.markDead(); }
       if (this.duel && G.state === 'playing') this.finishDuelForfeit();
-      else if (this.coop && !this.isHost && u === this.hostUser) { this.say(this.T('net.lost'), '', 0xff6a6a); if (G.state === 'playing') Game.finish(false, { rank: Math.max(2, Game.aliveCount() + 1) }); }
+      else if (this.coop && !this.isHost && u === this.hostUser) { this.say(this.T('net.lost'), '', 0xff6a6a); if (G.state === 'playing') Game.finish(false, this.ffa ? { title: this.T('net.hostLeft'), stats: this.T('net.hostLeftSub'), noStats: true, rank: 1, total: 1 } : { rank: Math.max(2, Game.aliveCount() + 1) }); }          // (a public match has no host to take over: it is cancelled and counts for nothing)
       else if (this.coop && this.isHost) this.checkEnd();
     }
   },
@@ -243,7 +251,7 @@ const Net = {
   // ---------- match: shared ----------
   addRemote(u, extra) {
     this.removeRemote(u);
-    return this.remotes[u] = new Remote(Object.assign({ u, n: this.nameOf(u), skin: this.skinOf(u), team: this.coop ? 'A' : null }, extra || {}));
+    return this.remotes[u] = new Remote(Object.assign({ u, n: this.nameOf(u), skin: this.skinOf(u), lo: this.duel ? null : this.loOf(u), team: this.coop && !this.ffa ? 'A' : null }, extra || {}));          // (squad mates are team A; in a public match everybody is an opponent)
   },
   removeRemote(u) { const r = this.remotes[u]; if (r && r.rig) { G.scene.remove(r.rig.root); r.removeChute(); } delete this.remotes[u]; },
 
@@ -251,7 +259,8 @@ const Net = {
     if (notify && this.active) this.cast({ t: 'bye' });
     for (const u in this.remotes) this.removeRemote(u);
     for (const i in this.puppets) { const p = this.puppets[i]; if (p.rig) { G.scene.remove(p.rig.root); p.removeChute(); } }
-    this.puppets = {}; this.session = null; this.active = this.coop = this.duel = this.isHost = false; this.hostUser = '';
+    this.puppets = {}; this.session = null; this.active = this.coop = this.duel = this.isHost = this.ffa = false; this.hostUser = ''; this.myRank = 0;
+    if (this.party && (this.party.auto || this.party.guest)) { clearTimeout(this.autoT); this.party = null; this.emit('party'); }          // a party made by the lobby server ends with its match (a party of friends stays for the next one)
     if (typeof Zone !== 'undefined') Zone.remote = false;
     if (typeof Player !== 'undefined') Player.team = null;
     if (typeof Loot !== 'undefined') { Loot.idPrefix = ''; Loot.silent = false; }
@@ -333,6 +342,7 @@ const Net = {
 
   localDied(attacker, wid) {
     if (!this.active) return;
+    this.myRank = Bots.aliveCount() + this.aliveExtra() + 1;                                             // (a public match: the place this player finishes in)
     this.cast({ t: 'dead', by: attacker && attacker.user ? attacker.user : '', bn: attacker ? attacker.name : '', w: wid || '', u: this.user });
     if (this.isHost) this.checkEnd();
   },
@@ -342,7 +352,8 @@ const Net = {
     const wasAlive = r.alive; r.markDead(); if (!wasAlive) return;
     if (this.duel) { Game.actorKilled(r, Player, m.w); return; }
     const byName = m.by === this.user ? Player.name : (m.bn || '?'), wn = Game.weaponName(m.w);
-    HUD.feed(this.T('feed.kill', { a: byName, v: r.name }) + (wn ? ' · ' + wn : ''), 0);
+    HUD.feed(this.T('feed.kill', { a: byName, v: r.name }) + (wn ? ' · ' + wn : ''), m.by === this.user ? 0xf3c64a : 0);
+    if (this.ffa && m.by === this.user) { Player.kills++; G.kills++; if (Profile.match) Profile.match.kills++; HUD.hitMarker(true, false); Events.emit('kill', { victim: r, wid: m.w, head: false, dist: 0 }); }          // a public match: the kill is mine
     if (this.isHost) this.checkEnd();
   },
   // host -> guests: a bot died
@@ -369,7 +380,7 @@ const Net = {
   // ---------- co-op session ----------
   // host: called at the end of Game.beginBR, once the match world exists
   enterCoopHost() {
-    this.session = { kind: 'coop', host: true }; this.coop = this.active = this.isHost = true; this.duel = false; this.hostUser = this.user; Player.team = 'A'; Loot.idPrefix = 'h';
+    this.session = { kind: 'coop', host: true }; this.coop = this.active = this.isHost = true; this.duel = false; this.hostUser = this.user; Player.team = this.ffa ? null : 'A'; Loot.idPrefix = 'h';
     let n = 0; for (const r of Loot.items) r.id = 'h' + (++n); Loot.idN = n;
     for (const m of this.party.members) if (m.u !== this.user) this.addRemote(m.u);
     const th = Math.atan2(Player.planeDir.z, Player.planeDir.x);
@@ -393,7 +404,7 @@ const Net = {
   },
   // guest: called from Game.beginBR with the host's world description
   enterCoopGuest(init) {
-    this.session = { kind: 'coop', host: false }; this.coop = this.active = true; this.isHost = false; this.duel = false; Player.team = 'A'; Loot.idPrefix = 'g' + this.user;
+    this.session = { kind: 'coop', host: false }; this.coop = this.active = true; this.isHost = false; this.duel = false; Player.team = this.ffa ? null : 'A'; Loot.idPrefix = 'g' + this.user;
     this.loadLoot(init.loot);
     const dx = Math.cos(init.th), dz = Math.sin(init.th);
     Player.planeDir.set(dx, 0, dz); Player.pos.set(-dx * (MAP.half + 40), 170, -dz * (MAP.half + 40)); Player.yaw = Math.atan2(-dx, -dz);
@@ -425,11 +436,43 @@ const Net = {
 
   checkEnd() {
     if (!(this.active && this.coop && this.isHost) || G.state !== 'playing') return;
+    if (this.ffa) {                                                                                      // a public match: it ends when one player is left (or no real player is)
+      const rem = Object.values(this.remotes).filter(r => r.alive), humans = (Player.alive ? 1 : 0) + rem.length, alive = humans + Bots.aliveCount(), total = BOT_COUNT + 1;
+      if (humans === 0 || alive <= 1) {
+        const w = Player.alive ? this.user : (rem[0] ? rem[0].user : '');
+        this.all({ t: 'end', w, total }); Game.finish(!!Player.alive, { rank: Player.alive ? 1 : (this.myRank || alive + 1), total });
+      }
+      return;
+    }
     const team = (Player.alive ? 1 : 0) + Object.values(this.remotes).filter(r => r.alive).length, bots = Bots.aliveCount(), total = BOT_COUNT + 1 + Object.keys(this.remotes).length;
     if (team === 0) { const rank = bots + 1; this.all({ t: 'end', won: 0, rank, total }); Game.finish(false, { rank, total }); }
     else if (bots === 0) { this.all({ t: 'end', won: 1, rank: 1, total }); Game.finish(true, { rank: 1, total }); }
   },
-  on_end(m) { if (G.state === 'playing') Game.finish(!!m.won, { rank: m.rank || 1, total: m.total || BOT_COUNT + 1 }); },
+  on_end(m) {
+    if (G.state !== 'playing') return;
+    if (this.ffa) { const me = m.w === this.user; Game.finish(me, { rank: me ? 1 : (this.myRank || Game.aliveCount() + 1), total: m.total || BOT_COUNT + 1 }); return; }
+    Game.finish(!!m.won, { rank: m.rank || 1, total: m.total || BOT_COUNT + 1 });
+  },
+
+  // ---------- public matches (found by the lobby server, src/net/matchmaking.js) ----------
+  // m: the lobby's 'match' message. The host waits for the others (they send 'join'), the guests connect to the host. Resolves true when this client is part of a match that is starting.
+  async publicMatch(m) {
+    const me = this.user, mode = m.mode === 'br' ? 'pbr' : 'duel';
+    if (m.role === 'host') {
+      this.party = { host: me, mode, members: [Object.assign({ u: me }, this.myInfo())], expect: m.members.length, br: m.br, auto: true }; this.emit('party');
+      clearTimeout(this.autoT); this.autoT = setTimeout(() => this.autoStart(), 14000);
+      return true;
+    }
+    this.party = { host: m.host, mode, members: [], guest: true };
+    for (let i = 0; i < 3; i++) { try { const c = await this.connect(m.host); c.send(Object.assign({ t: 'join' }, this.myInfo())); return true; } catch (e) { await new Promise(r => setTimeout(r, 1500)); } }
+    this.party = null; this.emit('party'); return false;
+  },
+  autoStart() {
+    clearTimeout(this.autoT); const P = this.party;
+    if (!P || P.host !== this.user || this.session || G.state !== 'menu') return;
+    if (P.members.length < 2) { this.party = null; this.emit('party'); this.emit('alone'); return; }          // nobody came: the caller plays against bots instead
+    this.startMatch();
+  },
 
   // ---------- duel ----------
   duelRound(duel, spawn, foe) {

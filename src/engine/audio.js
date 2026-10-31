@@ -97,11 +97,11 @@ const Sound = {
 
   special(pos) {
     if (!this.ctx) return;
-    const bus = this.bus(pos, 0.9);
-    this.tn(bus, { f: 2400, f2: 90, dur: 0.5, vol: 0.5, type: 'sawtooth' });
-    this.tn(bus, { f: 60, f2: 30, dur: 0.7, vol: 1, type: 'sine' });
-    this.nb(bus, { type: 'bandpass', f: 4000, f2: 300, q: 1.2, dur: 0.6, vol: 0.7 });
-    this.nb(bus, { type: 'lowpass', f: 600, dur: 1.2, vol: 0.8, delay: 0.02 });
+    const bus = this.bus(pos, 0.35);                                  // short and punchy: the Phantom-X fires about twelve times a second
+    this.tn(bus, { f: 3400, f2: 520, dur: 0.11, vol: 0.32, type: 'sawtooth' });
+    this.tn(bus, { f: 130, f2: 48, dur: 0.15, vol: 0.7, type: 'sine' });
+    this.nb(bus, { type: 'bandpass', f: 3200, f2: 700, q: 1.2, dur: 0.1, vol: 0.45 });
+    this.nb(bus, { type: 'lowpass', f: 700, dur: 0.18, vol: 0.4, delay: 0.01 });
   },
 
   charge(dur) {

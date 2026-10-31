@@ -85,6 +85,27 @@ const Flat = { on: false, y: 0, surf: 'gravel' };
 function coastZ(x) { return 176 + (fbm(x * 0.011 + 11, 2.2, 3) - 0.5) * 30 + Math.sin(x * 0.02) * 6; }
 function seaAmount(x, z) { const c = coastZ(x); return smoothstep(c - 6, c + 22, z); }
 
+// ---------- stunt jumps: dirt kickers beside the roads for the bikes (sites found with a flat-ground search of the finished world) ----------
+const RAMP_SITES = [[-17, 135], [-1, -117], [91, -49], [-181, -13], [-1, 79], [47, -105]];
+const RAMPS = RAMP_SITES.map(([x, z]) => {
+  let best = 1e9, yaw = 0;
+  for (const [ax, az, bx, bz] of RoadSegs) {                                       // the run-up follows the nearest road
+    const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz, t = clamp(((x - ax) * dx + (z - az) * dz) / l2, 0, 1), d = Math.hypot(x - (ax + dx * t), z - (az + dz * t));
+    if (d < best) { best = d; yaw = Math.atan2(dz, dx); }
+  }
+  return { x, z, c: Math.cos(yaw), s: Math.sin(yaw), len: 11, wid: 4.8, h: 3.0 };
+});
+function rampHeight(x, z) {
+  let h = 0;
+  for (const r of RAMPS) {
+    const dx = x - r.x, dz = z - r.z; if (dx * dx + dz * dz > 150) continue;
+    const au = Math.abs(dx * r.c + dz * r.s), av = Math.abs(-dx * r.s + dz * r.c);
+    if (au >= r.len || av >= r.wid) continue;
+    h = Math.max(h, r.h * (1 - smoothstep(r.len * 0.16, r.len, au)) * (1 - smoothstep(r.wid * 0.5, r.wid, av)));
+  }
+  return h;
+}
+
 function terrainHeightRaw(x, z) {
   if (Flat.on) return Flat.y;
   let h =(fbm(x * 0.009 + 3.1, z * 0.009 + 7.7, 4) - 0.5) * 14 + 3.2;
@@ -105,6 +126,7 @@ function terrainHeightRaw(x, z) {
     const cd = Math.hypot(x - c.x, z - c.z) / c.r;
     if (cd < 1) h -= c.d * (1 - cd * cd) * (1 - cd * cd);
   }
+  h += rampHeight(x, z);
   const ld = Math.hypot(x - LAKE.x, z - LAKE.z);
   if (ld < LAKE.r + 16) h = lerp(h, -3.2, 1 - smoothstep(LAKE.r * 0.55, LAKE.r + 14, ld));
   const sea = seaAmount(x, z);
@@ -147,9 +169,9 @@ function biomeAt(x, z) {
 }
 function waterDepth(x, z) { return Math.max(0, WATER_Y - terrainHeight(x, z)); }
 
-function randomGroundPoint(filter) {
+function randomGroundPoint(filter, rnd) {          // rnd: a seeded (a, b) => number for anything that must be identical for every online player; default Math.random
   for (let i = 0; i < 80; i++) {
-    const x = mr(-MAP.half + 25, MAP.half - 25), z = mr(-MAP.half + 25, MAP.half - 25);
+    const f = rnd || mr, x = f(-MAP.half + 25, MAP.half - 25), z = f(-MAP.half + 25, MAP.half - 25);
     if (waterDepth(x, z) > 0.05) continue;
     if (!filter || filter(x, z)) return { x, z };
   }
@@ -334,3 +356,14 @@ function addExcl(x, z, r) { Excl.push({ x, z, r }); }
 function inExcl(x, z, margin = 0) { for (const e of Excl) if (Math.hypot(x - e.x, z - e.z) < e.r + margin) return true; return false; }
 
 function srgbHex(r, g, b) { return (Math.round(clamp(r, 0, 1) * 255) << 16) | (Math.round(clamp(g, 0, 1) * 255) << 8) | Math.round(clamp(b, 0, 1) * 255); }
+
+// a box with rounded edges and corners (r = the rounding), normals included: the shape of helmets, plates, pouches, bike panels
+function roundBox(w, h, d, r, seg = 5) {
+  const g = new THREE.BoxGeometry(w, h, d, seg, seg, seg), pa = g.attributes.position, na = g.attributes.normal, v = new THREE.Vector3(), c = new THREE.Vector3();
+  const hx = Math.max(0, w / 2 - r), hy = Math.max(0, h / 2 - r), hz = Math.max(0, d / 2 - r);
+  for (let i = 0; i < pa.count; i++) {
+    v.fromBufferAttribute(pa, i); c.set(clamp(v.x, -hx, hx), clamp(v.y, -hy, hy), clamp(v.z, -hz, hz)); v.sub(c);
+    if (v.lengthSq() > 1e-12) { v.normalize(); na.setXYZ(i, v.x, v.y, v.z); pa.setXYZ(i, c.x + v.x * r, c.y + v.y * r, c.z + v.z * r); }
+  }
+  return g;
+}

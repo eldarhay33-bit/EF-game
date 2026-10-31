@@ -26,14 +26,16 @@ const Mover = {
 };
 
 class Bot {
-  constructor(idx) {
+  // fair: a bot of a duel or the tutorial (no equipment); base: the rating the level of a battle royale bot is drawn around (src/core/skill.js)
+  constructor(idx, fair, base) {
     this.isBot = true; this.idx = idx;
     this.name = BOT_NAMES[idx % BOT_NAMES.length] + (idx >= BOT_NAMES.length ? Math.floor(idx / BOT_NAMES.length) + 1 : '');
     this.pos = new THREE.Vector3(); this.vy = 0; this.onGround = false; this.yaw = Math.random() * 6.28; this.aimPitch = 0;
     this.alive = true; this.crouch = false; this.riding = false; this.bike = null;
-    const diff = DIFFICULTY[Settings.get('difficulty')] || DIFFICULTY.normal; this.diff = diff;
+    this.skill = fair ? Skill.duelRating() : Skill.botRating(base); const diff = Skill.params(this.skill); this.diff = diff;          // as good as the player: no difficulty picker
     this.health = 100 * diff.hp; this.maxHealth = this.health; this.shield = 0; this.dmgScale = diff.dmg;
-    this.skinId = SKINS[Math.floor(Math.random() * SKINS.length)].id;
+    this.gear = fair ? null : Skill.loadoutFor(this.skill); const pr = Skill.protection(this.gear); this.gdr = pr.dr; this.ghs = pr.hs;          // the equipment it wears protects it like it protects the player
+    const pool = SKINS.filter(s => s.rarity < 6); this.skinId = pool[Math.floor(Math.random() * pool.length)].id;           // every skin but the ULTRA MAX one
     this.slots = [{ w: Weapons.make('pistol', 0) }]; this.cur = 0; this.slots[0].w.mag = Weapons.stat(this.slots[0].w).size;
     this.ammo = { light: 45, medium: 0, shells: 0, heavy: 0, rocket: 0 }; this.meds = { small: 0, big: 0 }; this.shields = { small: 0, big: 0 }; this.nades = { frag: 0, smoke: 0, flash: 0, sticky: 0 };
     this.state = 'dropwait'; this.stateT = 0; this.enemy = null; this.lastSeen = -99; this.lastKnown = new THREE.Vector3(); this.engageT = 0; this.reactT = 0;
@@ -41,7 +43,7 @@ class Bot {
     this.thinkT = Math.random() * 0.3; this.dest = null; this.lootTarget = null; this.cover = null; this.peeking = false; this.peekT = 0; this.strafeDir = 1; this.strafeT = 1;
     this.speed = 0; this.vel = new THREE.Vector3(); this.stuckT = 0; this.walkDir = 0; this.nadeCd = rr(2, 8); this.rpgCd = 0; this.smokeCd = 0; this.suspect = null; this.suspectT = 0;
     this.deathT = 30; this.muzzleWorld = new THREE.Vector3(); this.lastHurt = -99; this.bikeTarget = null; this.grace = 0; this.recoil = 0;
-    this.rig = Character.build(this.skinId, Math.floor(Math.random() * 4));
+    this.rig = Character.build(this.skinId, Math.floor(Math.random() * 4), { loadout: this.gear });
     this.rig.root.visible = false; G.scene.add(this.rig.root);
     this.gunKey = ''; this.chute = null; this.ghost = null;
   }
@@ -102,11 +104,12 @@ class Bot {
     const r = this.rig, w = this.weapon();
     const key = w ? w.id + w.rarity + w.sight : '';
     if (key !== this.gunKey) { this.gunKey = key; r.setGun(w ? GM.build(w.id, w.rarity, w.sight) : null, w ? WEAPONS[w.id].hold : 'rifle'); }
-    r.root.position.set(this.pos.x, this.pos.y, this.pos.z); r.root.rotation.y = this.yaw;
-    if (this.riding && this.bike) { const s = this.bike.seat(); r.root.position.set(s.x, s.y - 0.88, s.z); }
+    if (this.riding && this.bike) this.bike.attachRider(r.root);                                    // on a bike the body is part of the bike
+    else { if (r.root.parent !== G.scene) G.scene.add(r.root); r.root.position.set(this.pos.x, this.pos.y, this.pos.z); r.root.rotation.y = this.yaw; }
     const engaged = G.time - this.lastFired < 2.2 || (this.state === 'engage' && this.enemy);
+    const md = Character.moveDir(this.vel.x, this.vel.z, this.yaw, this.speed || 0);
     r.update(dt, Object.assign({
-      speed: this.riding ? 0 : this.speed, fwd: this.walkDir >= 0 ? 1 : -1, crouch: this.crouch, raise: engaged ? 1 : 0, sprint: this.speed > 6.6 && !engaged, pitch: this.aimPitch,
+      speed: this.riding ? 0 : this.speed, fwd: this.walkDir >= 0 ? 1 : -1, dirx: md.dirx, dirz: md.dirz, swim: waterDepth(this.pos.x, this.pos.z) > 1.2, crouch: this.crouch, raise: engaged ? 1 : 0, sprint: this.speed > 6.6 && !engaged, pitch: this.aimPitch,
       slide: false, air: !this.onGround && this.state !== 'drop', ride: this.riding, dead: false, reload: this.reloadT > 0 ? clamp(1 - this.reloadT / (this.reloadTotal || 2), 0, 1) : 0, drop: null, recoil: this.recoil
     }, extra || {}));
     if (r.tick) r.tick(dt);
@@ -136,6 +139,7 @@ class Bot {
   // ---------- damage ----------
   takeDamage(amount, attacker, head, wid) {
     if (!this.alive) return;
+    if (this.gdr) amount *= 1 - this.gdr; if (head && this.ghs) amount *= 1 - this.ghs;                  // vest and helmet (the same numbers as the player's, CATALOG.equip)
     const sh = Math.min(this.shield, amount); this.shield -= sh; this.health -= amount - sh;
     this.lastHurt = G.time; this.useT = 0; this.pendingUse = null;
     if (this.state === 'drop' || this.state === 'dropwait') { /* invulnerable in the air handled by distance */ }
@@ -150,7 +154,7 @@ class Bot {
 
   die(attacker, wid) {
     this.alive = false; this.health = 0;
-    if (this.riding && this.bike) { this.bike.rider = null; this.bike.speed *= 0.5; this.bike = null; this.riding = false; }
+    if (this.riding && this.bike) { if (this.rig.root.parent !== G.scene) G.scene.add(this.rig.root); this.bike.rider = null; this.bike.speed *= 0.5; this.bike = null; this.riding = false; }
     this.removeChute();
     this.rig.setShadows(true); this.rig.update(0.5, { speed: 0, fwd: 1, crouch: false, raise: 0, sprint: false, pitch: 0, dead: true, ride: false });
     for (let i = 0; i < 8; i++) this.rig.update(0.1, { speed: 0, fwd: 1, crouch: false, raise: 0, sprint: false, pitch: 0, dead: true, ride: false });
@@ -175,17 +179,17 @@ const Bots = {
 
   reset() {
     for (const b of G.bots) {
-      if (b.rig) { G.scene.remove(b.rig.root); b.rig.root.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
+      if (b.rig) { G.scene.remove(b.rig.root); b.rig.root.traverse(o => { if (o.geometry && !o.userData.keepGeo) o.geometry.dispose(); }); }
       b.removeChute();
     }
     G.bots = [];
   },
 
-  spawn(n) {
+  spawn(n, rating) {
     this.reset();
-    const spots = World.lootSpots.filter(s => s.y !== undefined);
+    const spots = World.lootSpots.filter(s => s.y !== undefined), base = rating !== undefined ? rating : Skill.rating();                  // the bots are drawn around the player's level (or the average of the real players of a public match)
     for (let i = 0; i < n; i++) {
-      const b = new Bot(i);
+      const b = new Bot(i, false, base);
       // pick a landing spot (loot location) within gliding reach of the plane route
       const delay = rr(1.5, 9.5);
       b.prepareDrop(delay);
@@ -195,10 +199,10 @@ const Bots = {
 
   // a bot that starts on the ground (duels, training). o: { name, passive, hp, diff, loadout: [{id, rarity}], ammo }
   spawnGround(x, z, yaw, o = {}) {
-    const b = new Bot(G.bots.length + (o.idx || 0));
+    const b = new Bot(G.bots.length + (o.idx || 0), true);                  // (duels and the tutorial: no equipment, fair for both)
     if (o.name) b.name = o.name;
     if (o.skin) { G.scene.remove(b.rig.root); b.skinId = o.skin; b.rig = Character.build(o.skin, 0); b.rig.root.visible = false; G.scene.add(b.rig.root); b.gunKey = ''; }
-    if (o.diff) { b.diff = DIFFICULTY[o.diff] || DIFFICULTY.normal; b.dmgScale = b.diff.dmg; b.health = b.maxHealth = 100 * b.diff.hp; }
+    if (o.diff !== undefined) { b.diff = typeof o.diff === 'number' ? Skill.params(o.diff) : (DIFFICULTY[o.diff] || DIFFICULTY.normal); b.dmgScale = b.diff.dmg; b.health = b.maxHealth = 100 * b.diff.hp; }          // o.diff: a rating (0..100) or the name of one of the four tables
     if (o.hp) b.health = b.maxHealth = o.hp;
     b.pos.set(x, groundAt(x, z, 8), z); b.yaw = yaw; b.onGround = true; b.grace = 0; b.vy = 0;
     if (o.loadout) {

@@ -2,7 +2,7 @@
 const Themes = {
   lamp: null, current: 'classic',
 
-  mainVisible(v) { for (const o of World.main || []) o.visible = v; if (Terrain.buoys) Terrain.buoys.mesh.visible = v; },
+  mainVisible(v) { for (const o of World.main || []) o.visible = v; if (Terrain.buoys) Terrain.buoys.mesh.visible = v; Trees.shown(v); },          // (Trees decides which kind of tree comes back)
 
   apply(id) {
     id = id || 'classic';

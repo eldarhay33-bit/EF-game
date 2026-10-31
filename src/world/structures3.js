@@ -147,10 +147,11 @@ Object.assign(Structures, {
   },
 
   scatter() {
-    // lone farmhouses
+    // lone farmhouses (their spots come from a fixed seed: every online player has to get the same houses)
+    const rg = mulberry32(90417), rgf = (a, b) => a + rg() * (b - a);
     let n = 0;
     for (let i = 0; i < 600 && n < 6; i++) {
-      const p = randomGroundPoint((x, z) => biomeAt(x, z) === 'field' && Math.hypot(x - ARENA.x, z - ARENA.z) > 70);
+      const p = randomGroundPoint((x, z) => biomeAt(x, z) === 'field' && Math.hypot(x - ARENA.x, z - ARENA.z) > 70, rgf);
       const w = rr(7, 10), d = rr(6, 9);
       if (!this.canPlace(p.x, p.z, w, d, 2) || distToRoad(p.x, p.z) > 45) continue;
       const doors = ['+z', '-z', '+x', '-x'];

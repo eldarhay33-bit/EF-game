@@ -5,7 +5,7 @@ const KEY_LABELS = {
   kbm:   { fire: 'LMB', aim: 'RMB', jump: 'Space', crouch: 'Ctrl', sprint: 'Shift', reload: 'R', interact: 'E', nade: 'G', heal: 'H', shield: 'Q', map: 'M', pause: 'Esc', view: 'V', drop: 'Z', items: '6 7 8 9', bandage: '6', medkit: '7', shieldS: '8', shieldB: '9', smoke: 'F', flash: 'X', sticky: 'B', frag: 'G' },
   xbox:  { fire: 'RT', aim: 'LT', jump: 'A', crouch: 'B', sprint: 'L3', reload: 'X', interact: 'Y', nade: 'D-Pad ↑', heal: 'D-Pad ↓', shield: 'D-Pad ←', map: 'View', pause: 'Menu', view: 'R3', drop: 'Hold X', items: 'D-Pad', frag: 'D-Pad ↑', sticky: 'D-Pad →' },
   ps:    { fire: 'R2', aim: 'L2', jump: '✕', crouch: '○', sprint: 'L3', reload: '□', interact: '△', nade: 'D-Pad ↑', heal: 'D-Pad ↓', shield: 'D-Pad ←', map: 'Touchpad', pause: 'Options', view: 'R3', drop: 'Hold □', items: 'D-Pad', frag: 'D-Pad ↑', sticky: 'D-Pad →' },
-  touch: { fire: '●', aim: '⌖', jump: '⤒', crouch: '⌄', sprint: '≫', reload: '⟳', interact: '✋', nade: '💣', heal: '✚', shield: '◇', map: '▦', pause: 'II', view: '👁', drop: '🗑', items: '✚ ◇' }
+  touch: { fire: '●', aim: '⌖', jump: '⤒', crouch: '⌄', sprint: '≫', reload: '⟳', interact: '✋', nade: '▤', heal: '▤', shield: '▤', map: '☰ ▦', pause: '☰ II', view: '☰ 👁', drop: '☰ 🗑', items: '▤' }
 };
 
 const Input = {
@@ -133,7 +133,7 @@ const Input = {
       case 'heal': P.useMed(); break; case 'shield': P.useShield(); break;
       case 'bandage': P.useMed('small'); break; case 'medkit': P.useMed('big'); break; case 'shieldS': P.useShield('small'); break; case 'shieldB': P.useShield('big'); break; case 'drop': P.dropWeapon(); break;
       case 'nade': P.throwNade('frag'); break; case 'smoke': P.throwNade('smoke'); break; case 'flash': P.throwNade('flash'); break; case 'sticky': P.throwNade('sticky'); break;
-      case 'view': Settings.set('perspective', Settings.get('perspective') === 'fpp' ? 'tpp' : 'fpp'); HUD.banner(I18n.t(Settings.get('perspective') === 'fpp' ? 'hud.fpp' : 'hud.tpp'), 1); break;
+      case 'view': Settings.set('perspective', Settings.get('perspective') === 'fpp' ? 'tpp' : 'fpp'); HUD.banner(I18n.t(Settings.get('perspective') === 'fpp' ? 'hud.fpp' : 'hud.tpp'), 1); if (typeof Tutorial !== 'undefined') Tutorial.onView(); break;
       case 'map': HUD.toggleBig(); break;
       case 'next': this.cycle(1); break; case 'prev': this.cycle(-1); break;
       default: if (a.startsWith('slot')) P.equip(parseInt(a.slice(4)) - 1);
@@ -187,9 +187,12 @@ const Input = {
   // ---------- touch ----------
   buildTouch() {
     const root = document.getElementById('touch'); if (!root) return;
-    root.innerHTML = ''; root.classList.remove('hidden'); document.body.classList.add('touch');
+    root.innerHTML = ''; root.classList.toggle('hidden', typeof G === 'undefined' || G.state !== 'playing'); document.body.classList.add('touch');          // (the buttons belong to a running match: the lobby must not show them)
     const T = this.touch; T.buttons = {};
-    const mk = (cls, txt, x) => { const d = document.createElement('div'); d.className = 'tb ' + cls; d.textContent = txt; if (x) Object.assign(d.style, x); root.appendChild(d); return d; };
+    const k = Device.phone ? Device.k : clamp(innerHeight / 430, 0.62, 1.15); root.style.setProperty('--k', k);          // short screens (phones sideways) get smaller buttons placed closer to the edges (the same factor as the HUD, see Device.scale)
+    const scaled = (x) => { const o = {}; for (const key in x) { const v = x[key]; o[key] = typeof v === 'string' && v.endsWith('px') ? Math.round(parseFloat(v) * k) + 'px' : v; } return o; };
+    if (!T.resizeBound) { T.resizeBound = true; let rt = null; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (this.touchOn && !document.getElementById('touch').classList.contains('hidden')) this.buildTouch(); }, 250); }); }
+    const mk = (cls, txt, x) => { const d = document.createElement('div'); d.className = 'tb ' + cls; d.textContent = txt; if (x) Object.assign(d.style, scaled(x)); root.appendChild(d); return d; };
     const bind = (el, act, o = {}) => {
       el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId); el.classList.add('on'); this.device = 'touch'; if (o.toggle && act === 'aim') { this.aimToggle = true; if (Player.aiming) { this.release('aim', true); el.classList.remove('on'); return; } } this.press(act); });
       const up = e => { if (o.toggle && act === 'aim' && Player.aiming) return; el.classList.remove('on'); this.release(act); };
@@ -220,21 +223,22 @@ const Input = {
     zoneR.addEventListener('pointerup', endLook); zoneR.addEventListener('pointercancel', endLook);
     const S = Settings.get('touchSize') || 1;
     const B = (act, txt, cls, pos, o) => { const el = mk('btn ' + cls, txt, pos); el.style.setProperty('--s', S); bind(el, act, o); return el; };
-    B('fire', '●', 'fire', { right: '34px', bottom: '60px' }, {});
-    B('fire', '●', 'fire2', { left: '40px', bottom: '210px' }, {});
-    B('aim', '⌖', 'aim', { right: '150px', bottom: '170px' }, { toggle: true });
-    B('jump', '⤒', 'jump', { right: '190px', bottom: '50px' }, {});
-    B('crouch', '⌄', 'crouch', { right: '34px', bottom: '190px' }, {});
-    B('reload', '⟳', 'small', { right: '260px', bottom: '90px' }, {});
-    const inter = B('interact', '✋', 'interact', { right: '220px', bottom: '250px' }, {}); T.interactBtn = inter; inter.style.display = 'none';
-    B('nade', '💣', 'small', { right: '20px', bottom: '300px' }, {}); B('drop', '🗑', 'mini', { left: '14px', top: '250px' }, {});
-    B('heal', '✚', 'small', { right: '90px', bottom: '300px' }, {});
-    B('shield', '◇', 'small', { right: '160px', bottom: '310px' }, {});
-    B('view', '👁', 'mini', { left: '14px', top: '130px' }, {});
-    B('map', '▦', 'mini', { left: '14px', top: '190px' }, {});
-    B('pause', 'II', 'mini', { left: '14px', top: '70px' }, {});
-    B('prev', '‹', 'mini', { right: '250px', top: '14px' }, {}); B('next', '›', 'mini', { right: '210px', top: '14px' }, {});
-    for (let i = 1; i <= 5; i++) B('slot' + i, String(i), 'slotb', { right: 14 + (5 - i) * 46 + 'px', top: '250px' }, {});
+    // the layout is drawn for a 820 x 390 screen and scaled by k: the right thumb has FIRE in the corner with jump, aim and crouch around it and reload / interact one ring further out;
+    // the left thumb steers (the stick appears wherever it touches the left half) and has a second fire button above that spot; the one other button is the menu (☰) in the top left corner:
+    // it opens a tray with pause, camera, map and drop. Weapons and items (bandage, medkit, shield, grenades) are the tappable boxes of the HUD (hud.js); the minimap opens the big map.
+    // (the touch layer lies BELOW the HUD in css/v3.css, otherwise its two big zones would swallow the taps on those boxes)
+    B('fire', '●', 'fire', { right: '20px', bottom: '16px' }, {});
+    B('jump', '⤒', 'jump', { right: '112px', bottom: '12px' }, {});
+    B('aim', '⌖', 'aim', { right: '104px', bottom: '82px' }, { toggle: true });
+    B('crouch', '⌄', 'crouch', { right: '24px', bottom: '106px' }, {});
+    B('reload', '⟳', 'small reload', { right: '176px', bottom: '62px' }, {});
+    const inter = B('interact', '✋', 'interact', { right: '170px', bottom: '124px' }, {}); T.interactBtn = inter; inter.style.display = 'none';
+    B('fire', '●', 'fire2', { left: '22px', bottom: '150px' }, {});
+    const tray = [['pause', 'II', 46], ['view', '👁', 90], ['map', '▦', 134], ['drop', '🗑', 178]].map(([act, txt, x]) => { const el = B(act, txt, 'mini tray t-' + act, { left: x + 'px', top: '8px' }, {}); el.style.display = 'none'; return el; });
+    const menu = mk('btn mini menu', '☰', { left: '8px', top: '8px' }); let trayT = null;
+    const showTray = on => { for (const t of tray) t.style.display = on ? 'flex' : 'none'; menu.classList.toggle('on', on); clearTimeout(trayT); if (on) trayT = setTimeout(() => showTray(false), 6000); };
+    menu.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); this.device = 'touch'; showTray(tray[0].style.display === 'none'); });
+    for (const t of tray) t.addEventListener('pointerup', () => setTimeout(() => showTray(false), 80));
     document.documentElement.style.touchAction = 'none';
     const fs = document.documentElement.requestFullscreen;
     window.__tryFullscreen = () => { try { if (fs && !document.fullscreenElement) document.documentElement.requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); } catch (e) { /* ignore */ } };

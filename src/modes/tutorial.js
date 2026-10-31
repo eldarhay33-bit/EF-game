@@ -3,20 +3,23 @@ const Tutorial = {
   active: false, step: 0, steps: null, st: {}, dummies: [], bot: null, spawnT: 0,
 
   def() {
-    const K = a => Input.key(a);
+    const K = a => Input.key(a), D = (k, p) => I18n.t(Input.device === 'touch' ? k + '.touch' : k, p);          // D: touch screens have their own wording where the controls differ
+    // hl: what to light up on the screen for this step (the touch buttons and the HUD boxes carry the same class names in every language)
     return [
       { id: 'look', hint: () => I18n.t('tut.look.' + Input.device), done: s => s.turn > 1.6 },
       { id: 'move', hint: () => I18n.t('tut.move.' + Input.device), done: s => s.dist > 10 },
       { id: 'sprint', hint: () => I18n.t('tut.sprint.' + Input.device, { k: K('sprint') }), done: s => s.sprint > 1.5 },
-      { id: 'jump', hint: () => I18n.t('tut.jump', { k: K('jump') }), done: s => s.jumped },
-      { id: 'crouch', hint: () => I18n.t('tut.crouch', { k: K('crouch') }), done: s => s.crouched > 0.6 },
-      { id: 'pickup', hint: () => I18n.t('tut.pickup', { k: K('interact') }), done: () => Player.slots.some(s => s && s.w.id === 'ar'), setup: () => { const p = Player.pos, f = Player.forward(); Loot.spawn(p.x + f.x * 4, groundAt(p.x + f.x * 4, p.z + f.z * 4, 5), p.z + f.z * 4, { kind: 'weapon', w: Weapons.make('ar', 1) }); Loot.spawn(p.x + f.x * 5, groundAt(p.x + f.x * 5, p.z + f.z * 5, 5), p.z + f.z * 5 + 1, { kind: 'ammo', type: 'medium', amount: 90 }); } },
-      { id: 'slots', hint: () => I18n.t('tut.slots.' + Input.device), done: s => s.slotSwitched },
-      { id: 'aim', hint: () => I18n.t('tut.aim', { k: K('aim') }), done: s => s.aimed > 1.0 },
-      { id: 'shoot', hint: () => I18n.t('tut.shoot', { k: K('fire'), n: Math.max(0, 3 - Tutorial.st.kills) }), done: s => s.kills >= 3, setup: () => Tutorial.spawnDummies() },
-      { id: 'reload', hint: () => I18n.t('tut.reload', { k: K('reload') }), done: s => s.reloaded, setup: () => { const w = Player.weapon(); if (w) w.mag = Math.min(w.mag, 5); } },
-      { id: 'heal', hint: () => I18n.t('tut.heal', { k: K('heal') }), done: s => s.healed, setup: () => { Player.health = 55; Player.meds.small = Math.max(2, Player.meds.small); } },
-      { id: 'nade', hint: () => I18n.t('tut.nade', { k: K('nade') }), done: s => s.threw, setup: () => { Player.nades.frag = Math.max(2, Player.nades.frag); } },
+      { id: 'jump', hint: () => I18n.t('tut.jump', { k: K('jump') }), done: s => s.jumped, hl: '.tb.btn.jump' },
+      { id: 'crouch', hint: () => I18n.t('tut.crouch', { k: K('crouch') }), done: s => s.crouched > 0.6, hl: '.tb.btn.crouch' },
+      { id: 'pickup', hint: () => I18n.t('tut.pickup', { k: K('interact') }), done: () => Player.slots.some(s => s && s.w.id === 'ar'), hl: '.tb.btn.interact', setup: () => { const p = Player.pos, f = Player.forward(); Loot.spawn(p.x + f.x * 4, groundAt(p.x + f.x * 4, p.z + f.z * 4, 5), p.z + f.z * 4, { kind: 'weapon', w: Weapons.make('ar', 1) }); Loot.spawn(p.x + f.x * 5, groundAt(p.x + f.x * 5, p.z + f.z * 5, 5), p.z + f.z * 5 + 1, { kind: 'ammo', type: 'medium', amount: 90 }); } },
+      { id: 'slots', hint: () => I18n.t('tut.slots.' + Input.device), done: s => s.slotSwitched, hl: '#slots .slot' },
+      { id: 'aim', hint: () => D('tut.aim', { k: K('aim') }), done: s => s.aimed > 1.0, hl: '.tb.btn.aim' },
+      { id: 'shoot', hint: () => I18n.t('tut.shoot', { k: K('fire'), n: Math.max(0, 3 - Tutorial.st.kills) }), done: s => s.kills >= 3, hl: '.tb.btn.fire', setup: () => Tutorial.spawnDummies() },
+      { id: 'reload', hint: () => I18n.t('tut.reload', { k: K('reload') }), done: s => s.reloaded, hl: '.tb.btn.reload', setup: () => { const w = Player.weapon(); if (w) w.mag = Math.min(w.mag, 5); } },
+      { id: 'heal', hint: () => D('tut.heal', { k: K('heal') }), done: s => s.healed, hl: '#consum .it.healS', setup: () => { Player.health = 55; Player.meds.small = Math.max(2, Player.meds.small); } },
+      { id: 'nade', hint: () => D('tut.nade', { k: K('nade') }), done: s => s.threw, hl: '#consum .it.frag', setup: () => { Player.nades.frag = Math.max(2, Player.nades.frag); } },
+      { id: 'camera', hint: () => I18n.t('tut.camera.' + Input.device, { k: K('view') }), done: s => s.views >= 2, hl: '.tb.btn.menu, .tb.tray.t-view' },
+      { id: 'map', hint: () => I18n.t('tut.map.' + Input.device, { k: K('map') }), done: s => s.mapOpened && !HUD.bigOn, hl: '#minimap' },
       { id: 'grass', hint: () => I18n.t('tut.grass'), done: () => true, auto: 5 },
       { id: 'fight', hint: () => I18n.t('tut.fight'), done: s => s.botDown, setup: () => Tutorial.spawnSparring() }
     ];
@@ -26,7 +29,7 @@ const Tutorial = {
     Arena.enter('training');
     SkySys.apply('day'); Game.syncEnv(); Themes.setLamp(false);
     Zone.reset(); Zone.wall.visible = false;
-    Player.reset(); Player.fair = true; Player.fx = Profile.noEffects();
+    Player.reset(); Player.fair = true; Player.fx = Profile.noEffects(); Player.buildRig();
     const sp = Arena.spawns[0];
     Player.phase = 'ground'; Player.onGround = true; Player.pos.set(sp[0], 0, sp[1]); Player.yaw = sp[2]; Player.pitch = 0; Player.tppNow = false;
     Duel.giveLoadout(Player); Player.slots = [{ w: Object.assign(Weapons.make('pistol', 0), { mag: 15 }) }, null, null, null, null]; Player.ammo = { light: 90, medium: 0, shells: 0, heavy: 0, rocket: 0 }; Player.meds = { small: 0, big: 0 }; Player.nades = { frag: 0, smoke: 0, flash: 0, sticky: 0 };
@@ -38,7 +41,7 @@ const Tutorial = {
 
   leave() {
     if (!this.active) return;
-    this.active = false; if (HUD.el.tutBox) HUD.el.tutBox.classList.remove('on');
+    this.active = false; if (HUD.el.tutBox) HUD.el.tutBox.classList.remove('on'); this.highlight();
     document.removeEventListener('keydown', this.keyHandler);
     Arena.leave(); Bots.reset();
   },
@@ -47,7 +50,7 @@ const Tutorial = {
     this.step++;
     if (this.step >= this.steps.length) { this.complete(); return; }
     const was = this.st;
-    this.st = { turn: 0, dist: 0, sprint: 0, jumped: false, crouched: 0, aimed: 0, kills: 0, reloaded: false, healed: false, threw: false, botDown: false, lastYaw: Player.yaw, lastPos: Player.pos.clone(), t: 0, slotSwitched: false };
+    this.st = { turn: 0, dist: 0, sprint: 0, jumped: false, crouched: 0, aimed: 0, kills: 0, reloaded: false, healed: false, threw: false, botDown: false, lastYaw: Player.yaw, lastPos: Player.pos.clone(), t: 0, slotSwitched: false, views: 0, mapOpened: false };
     if (!first) Sound.pickup();
     const s = this.steps[this.step]; if (s.setup) s.setup();
     void was; this.render();
@@ -58,7 +61,17 @@ const Tutorial = {
   render() {
     const s = this.steps[this.step], box = HUD.el.tutBox;
     box.innerHTML = `<small>${I18n.t('tut.step', { n: this.step + 1, m: this.steps.length })}</small><b>${I18n.t('tut.t.' + s.id)}</b><span>${s.hint()}</span><em>${I18n.t('tut.skip', { k: Input.device === 'kbm' ? 'N' : '' })}</em>`;
+    this.highlight();
   },
+
+  // the buttons / boxes this step is about pulse (touch buttons are rebuilt now and then, so the lighting is renewed with every refresh of the box)
+  highlight() {
+    for (const e of document.querySelectorAll('.tutHL')) e.classList.remove('tutHL');
+    const s = this.active && this.steps && this.steps[this.step]; if (!s || !s.hl) return;
+    for (const e of document.querySelectorAll(s.hl)) e.classList.add('tutHL');
+  },
+
+  onView() { if (this.active && this.st) this.st.views++; },
 
   spawnDummies() {
     const spawn = (x, z, i) => { const b = Bots.spawnGround(x, z, Math.PI / 2, { name: 'Target ' + (i + 1), passive: true, hp: 60 }); this.dummies.push(b); };
@@ -89,7 +102,7 @@ const Tutorial = {
     S.turn += Math.abs(angDiff(S.lastYaw, P.yaw)); S.lastYaw = P.yaw;
     const d = Math.hypot(P.pos.x - S.lastPos.x, P.pos.z - S.lastPos.z); S.dist += d; S.lastPos.copy(P.pos);
     if (P.sprinting) S.sprint += dt; if (!P.onGround && P.vel.y > 2) S.jumped = true; if (P.crouch) S.crouched += dt; if (P.aimT > 0.8) S.aimed += dt;
-    if (P.reloadT > 0) S.reloaded = true; if (P.useT > 0) S.healed = true; if (P.throwT > 0) S.threw = true;
+    if (P.reloadT > 0) S.reloaded = true; if (P.useT > 0) S.healed = true; if (P.throwT > 0) S.threw = true; if (HUD.bigOn) S.mapOpened = true;
     if (P.cur !== (S.curAtStart === undefined ? (S.curAtStart = P.cur) : S.curAtStart)) this.st.slotSwitched = true;
     const step = this.steps[this.step];
     // dummies stand back up a few seconds after being hit
@@ -105,7 +118,7 @@ const Tutorial = {
   },
 
   complete() {
-    this.active = false; HUD.el.tutBox.classList.remove('on');
+    this.active = false; HUD.el.tutBox.classList.remove('on'); this.highlight();
     Game.finish(true, { title: I18n.t('tut.done'), stats: I18n.t('tut.doneSub'), rank: 1, total: 1, time: Math.round(G.time) });
   }
 };

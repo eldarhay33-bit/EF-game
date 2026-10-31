@@ -7,12 +7,12 @@ const Character = {
   materialsFor(skin, tone) {
     const k = skin.id + tone;
     if (this.mats[k]) return this.mats[k];
-    const cloth = new THREE.MeshStandardMaterial({
+    const cloth = new THREE.MeshPhysicalMaterial({
       map: skin.camo ? Tex.camo(skin.camo, SKINS.indexOf(skin) + 1, skin.period) : null, color: skin.camo ? 0xffffff : skin.cloth,
-      roughness: skin.metal ? 0.35 : 0.9, metalness: skin.metal || 0, envMapIntensity: 0.7
+      roughness: skin.metal ? 0.35 : 0.88, metalness: skin.metal || 0, envMapIntensity: 0.8, sheen: skin.metal ? 0 : 0.7, sheenRoughness: 0.45, sheenColor: new THREE.Color(skin.camo ? skin.camo[2] : skin.cloth).lerp(new THREE.Color(0xffffff), 0.45), clearcoat: skin.metal ? 0.6 : 0, clearcoatRoughness: 0.22
     });
-    const gear = new THREE.MeshStandardMaterial({ color: skin.gear, roughness: 0.7, metalness: skin.metal ? 0.6 : 0.1, envMapIntensity: 0.7 });
-    const helmet = new THREE.MeshStandardMaterial({ color: skin.helmet, roughness: 0.5, metalness: skin.metal ? 0.7 : 0.25, envMapIntensity: 0.9 });
+    const gear = new THREE.MeshPhysicalMaterial({ color: skin.gear, roughness: 0.62, metalness: skin.metal ? 0.6 : 0.1, envMapIntensity: 0.8, clearcoat: 0.35, clearcoatRoughness: 0.3 });
+    const helmet = new THREE.MeshPhysicalMaterial({ color: skin.helmet, roughness: 0.42, metalness: skin.metal ? 0.7 : 0.25, envMapIntensity: 1.0, clearcoat: 0.75, clearcoatRoughness: 0.14 });
     const flesh = new THREE.MeshStandardMaterial({ color: tone, roughness: 0.65, metalness: 0 });
     const pants = cloth.clone(); pants.color = new THREE.Color(skin.camo ? 0xb9b9b9 : skin.cloth).multiplyScalar(skin.camo ? 1 : 0.82);
     const mask = new THREE.MeshStandardMaterial({ color: new THREE.Color(skin.gear).multiplyScalar(1.15), roughness: 0.9, metalness: 0 });
@@ -21,10 +21,12 @@ const Character = {
     return (this.mats[k] = { cloth, pants, gear, helmet, flesh, mask, glow, visor });
   },
 
+  faceMat() { return this.mats.face || (this.mats.face = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55 })); },
+
   geos() {
     if (this.geo) return this.geo;
-    const cyl = (a, b, l, s = 12) => new THREE.CylinderGeometry(a, b, l, s);
-    const sph = (r, sx = 1, sy = 1, sz = 1) => new THREE.SphereGeometry(r, 12, 9).scale(sx, sy, sz);
+    const cyl = (a, b, l, s = 18) => new THREE.CylinderGeometry(a, b, l, s);
+    const sph = (r, sx = 1, sy = 1, sz = 1) => new THREE.SphereGeometry(r, 20, 14).scale(sx, sy, sz);
     const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
     const T = (g, x, y, z) => g.translate(x, y, z);
     this.geo = {
@@ -46,8 +48,16 @@ const Character = {
     return this.geo;
   },
 
+  // which way a body moves relative to the way it looks: { dirx: to its right, dirz: forwards }, both -1..1 (the rigs turn the legs towards it)
+  moveDir(vx, vz, yaw, sp) {
+    if (sp < 0.3) return { dirx: 0, dirz: 1 };
+    return { dirx: (vx * Math.cos(yaw) - vz * Math.sin(yaw)) / sp, dirz: (-vx * Math.sin(yaw) - vz * Math.cos(yaw)) / sp };
+  },
+
   build(skinId, toneIdx = 0, opts) {
-    return new Rig(this.byId(skinId), SKIN_TONES[toneIdx % SKIN_TONES.length], opts || {});
+    const skin = this.byId(skinId);
+    if (skin.q && this.q && this.q.ready && window.QRig) return new QRig(skin, opts || {});          // skeletal character (see qrig.js)
+    return new Rig(skin, SKIN_TONES[toneIdx % SKIN_TONES.length], opts || {});                        // the procedural soldier when the character files could not be loaded
   }
 };
 
@@ -86,7 +96,20 @@ class Rig {
       this.chest.add(mesh(merge(st), M.glow));
     }
     this.neck = grp(0, 0.54, 0, this.chest);
-    this.headMeshes = [mesh(Gs.neck, M.mask), mesh(merge([Gs.head, Gs.nose]), M.mask)];
+    this.headMeshes = [mesh(Gs.neck, M.flesh), mesh(merge([Gs.head, Gs.nose]), M.flesh)];
+    {                                                                                       // face: eyes with pupils, brows, ears and a mouth in one vertex-coloured mesh
+      const colr = (g, hex) => { const c = new THREE.Color(hex), n = g.attributes.position.count, arr = new Float32Array(n * 3); for (let i = 0; i < n; i++) { arr[i * 3] = c.r; arr[i * 3 + 1] = c.g; arr[i * 3 + 2] = c.b; } g.setAttribute('color', new THREE.BufferAttribute(arr, 3)); return g; };
+      const fg = [], dark = new THREE.Color(tone).multiplyScalar(0.62).getHex();
+      for (const s of [-1, 1]) {
+        fg.push(colr(new THREE.SphereGeometry(0.0165, 12, 10).scale(1.2, 0.85, 0.55).translate(s * 0.037, 0.138, -0.094), 0xf1eee6));
+        fg.push(colr(new THREE.SphereGeometry(0.0085, 8, 6).scale(1, 1, 0.6).translate(s * 0.037, 0.138, -0.1015), 0x1d1610));
+        fg.push(colr(new THREE.BoxGeometry(0.036, 0.007, 0.01).rotateZ(-s * 0.14).translate(s * 0.038, 0.164, -0.094), 0x2b1d14));
+        fg.push(colr(new THREE.SphereGeometry(0.02, 8, 6).scale(0.5, 1.5, 0.9).translate(s * 0.097, 0.125, 0.004), tone));
+      }
+      fg.push(colr(new THREE.BoxGeometry(0.042, 0.006, 0.01).translate(0, 0.078, -0.096), dark));
+      const face = mesh(FX.mergeGeometries(fg, false), Character.faceMat()); face.castShadow = false;
+      this.headMeshes.push(face);
+    }
     this.headMeshes.forEach(m => this.neck.add(m));
     if (headT === 'helmet') { this.neck.add(mesh(merge([Gs.helmet, Gs.brim, Gs.strap, Gs.nvg, Gs.rail, Gs.chin]), M.helmet)); this.neck.add(mesh(Gs.goggle, M.visor)); }
     for (const s of [-1, 1]) {

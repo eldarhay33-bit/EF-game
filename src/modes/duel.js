@@ -20,7 +20,7 @@ const Duel = {
     SkySys.apply(map === 'ruins' ? 'golden' : map === 'neon' ? 'night' : 'day'); Game.syncEnv();
     Themes.setLamp(false);
     this.active = true; this.round = 0; this.score = [0, 0]; this.need = 2;
-    Player.reset(); Player.fair = true; Player.fx = Profile.noEffects();
+    Player.reset(); Player.fair = true; Player.fx = Profile.noEffects(); Player.buildRig();                  // (no equipment on the body: it has no effect in a duel)
     Zone.reset(); Zone.wall.visible = false;
     this.startRound();
   },
@@ -51,7 +51,7 @@ const Duel = {
     this.giveLoadout(Player);
     if (this.net) this.net.onRound(this, foe);
     else {
-      this.opp = Bots.spawnGround(foe[0], foe[1], foe[2], { name: Duel.rivalName(), diff: Settings.get('difficulty'), loadout: DUEL_LOADOUT.weapons, ammo: DUEL_LOADOUT.ammo, meds: DUEL_LOADOUT.meds });
+      this.opp = Bots.spawnGround(foe[0], foe[1], foe[2], { name: Duel.rivalName(), diff: Skill.duelRating(), loadout: DUEL_LOADOUT.weapons, ammo: DUEL_LOADOUT.ammo, meds: DUEL_LOADOUT.meds });
       this.opp.frozenUntil = G.time + this.t;
     }
     Player.frozen = true;
@@ -59,7 +59,7 @@ const Duel = {
     G.noises.length = 0;
   },
 
-  rivalName() { return pick(BOT_NAMES) + (Settings.get('difficulty') === 'insane' ? ' ☠' : ''); },
+  rivalName() { return pick(BOT_NAMES) + (Profile.match && (Profile.match.lvl || 0) >= 80 ? ' ☠' : ''); },          // (the skull marks an opponent of the top level)
 
   update(dt) {
     if (!this.active) return;
@@ -105,6 +105,6 @@ const Duel = {
   finish() {
     const won = this.score[0] > this.score[1];
     this.phase = 'done';
-    Game.finish(won, { title: I18n.t(won ? 'duel.victory' : 'duel.defeat'), stats: I18n.t('duel.final', { a: this.score[0], b: this.score[1], d: Settings.get('difficulty') ? I18n.t('diff.' + Settings.get('difficulty')) : '' }), total: 2, rank: won ? 1 : 2, time: Math.round(G.time) });
+    Game.finish(won, { title: I18n.t(won ? 'duel.victory' : 'duel.defeat'), stats: I18n.t('duel.final', { a: this.score[0], b: this.score[1], d: Skill.name(Profile.match ? Profile.match.lvl : undefined) }), total: 2, rank: won ? 1 : 2, time: Math.round(G.time) });
   }
 };

@@ -426,7 +426,7 @@ Object.assign(Bot.prototype, {
     this.steer({ x: b.pos.x, z: b.pos.z }, 7, dt, { arrive: 1 });
   },
 
-  mountBike(b) { this.riding = true; this.bike = b; b.rider = this; this.crouch = false; this.rideStuck = 0; this.state = 'rotate'; },
+  mountBike(b) { this.riding = true; this.bike = b; b.rider = this; this.crouch = false; this.rideStuck = 0; this.state = 'rotate'; b.gvy = 0; },
 
   dismount() {
     const b = this.bike; if (!b) return;

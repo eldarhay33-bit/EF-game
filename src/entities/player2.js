@@ -29,7 +29,11 @@ Object.assign(Player, {
       if (it.w.mag === undefined) it.w.mag = Weapons.stat(it.w).size;
       this.slots[slot] = { w: it.w };
       this.cur = -1; this.equip(slot); this.vmKey = '';
-      if (it.w.id === 'special') { HUD.banner(I18n.t('msg.exotic'), 4); HUD.feed(I18n.t('feed.exotic')); Events.emit('exotic'); if (Profile.match) Profile.match.exotic = true; }
+      if (it.w.id === 'special') {                                  // the Phantom-X: big message, 30 spare rounds come with it
+        const trial = !!(Profile.match && Profile.match.trial);
+        HUD.banner(I18n.t('msg.exotic') + (trial ? ' · ' + I18n.t('msg.trial') : ''), 6); HUD.feed(I18n.t('feed.exotic')); HUD.toast(WEAPONS.special.name, I18n.t('feed.exotic'), 0x35f0ff);
+        this.ammo.heavy = Math.min(AMMO.heavy.cap, this.ammo.heavy + 30); FX.shake(0.4, 0.6); Events.emit('exotic'); if (Profile.match && !trial) Profile.match.exotic = true;
+      }
     } else if (it.kind === 'ammo') {
       if (this.ammo[it.type] >= AMMO[it.type].cap) { HUD.banner(I18n.t('msg.ammoFull'), 1); return; }
       this.ammo[it.type] = Math.min(AMMO[it.type].cap, this.ammo[it.type] + it.amount);
@@ -97,8 +101,10 @@ Object.assign(Player, {
       this.throwT -= dt;
       if (!this.thrown && this.throwT <= 0.28) { this.thrown = true; this.releaseNade(); }
     }
+    this.lockT = null;
     if (!w) return;
     const st = Weapons.stat(w);
+    if (d.lock && this.alive && !this.riding) this.lockT = this.findLock(d);                    // what the Phantom-X has locked on to (the HUD draws a ring on it)
     if (this.reloadT > 0) {
       if (d.shell && this.firing && w.mag > 0 && this.reloadT < this.reloadTotal * 0.6) { this.reloadT = 0; }
       else { this.reloadT -= dt; if (this.reloadT <= 0) { this.reloadT = 0; this.finishReload(w, d, st); } }
@@ -127,6 +133,11 @@ Object.assign(Player, {
         else if (!d.spinup || this.spin >= 1) this.fire(w, d, st);
       }
     }
+  },
+
+  findLock(d) {
+    const o = G.camera.position, f = new THREE.Vector3(0, 0, -1).applyQuaternion(G.camera.quaternion);
+    return Combat.lockTarget(o, f, Combat.actors().filter(a => a !== this && !(a.team && a.team === this.team)), d.lock);
   },
 
   computeSpread(d) {

@@ -1,0 +1,89 @@
+/* Phones (html.phone, set by Device in settings.js; ?phone=1 turns it on for a test): the game is played sideways, so in portrait only a "rotate" screen shows.
+   The lobby keeps its PLAY button in reach of the thumb, the touch buttons shrink on short screens and the HUD is made smaller. */
+
+/* ---------- rotate screen ---------- */
+#rotate { position: fixed; inset: 0; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: radial-gradient(circle at 50% 40%, #16224a, #070a16 72%); color: #fff; text-align: center; padding: 24px; }
+#rotate .rotIcon { font-size: 76px; line-height: 1; animation: rotPhone 2.6s ease-in-out infinite; }
+#rotate h2 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+#rotate button { margin-top: 6px; background: var(--gold, #f3c64a); color: #17140a; font-weight: 800; font-size: 16px; padding: 12px 30px; border-radius: 10px; letter-spacing: 1px; }
+@keyframes rotPhone { 0%, 25% { transform: rotate(0); } 65%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) { html.phone #rotate { display: flex; } }
+
+/* ---------- top bar buttons (full screen, install) ---------- */
+.navbtn { background: rgba(255, 255, 255, .1); color: #fff; border: 1px solid rgba(255, 255, 255, .25); border-radius: 10px; padding: 6px 11px; font-size: 16px; line-height: 1; cursor: pointer; }
+.navbtn.hidden { display: none; }
+html:not(.phone):not(.tablet) #fsBtn { display: none; }
+
+/* ---------- lobby on a phone (sideways) ----------
+   One slim top row (crest, tabs that scroll sideways, wallet), the cards in two columns around the character, the PLAY button in the thumb's reach, everything a little smaller. */
+html.phone .topnav { flex-wrap: nowrap; gap: 6px; padding: 4px 8px; align-items: center; row-gap: 0; }
+html.phone .logo { flex: none; } html.phone .logo .emb { height: 28px; }
+html.phone .tabs { order: 0; flex: 1 1 0; min-width: 0; flex-basis: 0; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; gap: 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+html.phone .tabs::-webkit-scrollbar { display: none; }
+html.phone .tabs button { padding: 6px 9px; font-size: 12px; min-height: 30px; flex: none; }
+html.phone .wallet { gap: 4px; flex: none; }
+html.phone .chip { font-size: 11px; padding: 2px 8px 2px 3px; }
+html.phone .chip.lvl { min-width: 52px; padding: 2px 8px; }
+html.phone .profile { display: none; }
+html.phone .navbtn { padding: 4px 8px; font-size: 14px; min-height: 28px; }
+html.phone .tab { inset: 42px 0 0 0; padding: 4px 10px 70px; gap: 8px; }
+html.phone .side { width: 40vw; gap: 6px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+html.phone .side::-webkit-scrollbar { display: none; }
+html.phone .side.wide, html.phone .side.wide2 { width: 48vw; }                       /* (the character in the middle keeps about 12 % of the width) */
+html.phone .card { padding: 8px 10px; border-radius: 8px; }
+html.phone .card h3 { font-size: 11px; margin-bottom: 4px; }
+html.phone .card p { font-size: 12px; line-height: 1.35; }
+html.phone .ttl { font-size: 15px; margin-bottom: 4px; }
+html.phone .seg { gap: 4px; } html.phone .seg button { padding: 5px 4px; font-size: 12px; min-width: 48px; min-height: 32px; }
+html.phone .seg.col button { padding: 6px 8px; } html.phone .seg.col button small { display: none; }                  /* the modes are told by their names: one line each, so that the level, camera and map cards fit under them without scrolling */
+html.phone .card.map canvas { width: auto; max-width: 100%; max-height: 118px; margin: 0 auto 4px; display: block; }
+html.phone .mrow { font-size: 11px; padding: 3px 0 7px; }
+html.phone .hint { display: none; }
+html.phone .card.lvl p { display: none; } html.phone .card.lvl .lvlRow b { font-size: 14px; min-width: 76px; } html.phone .card.lvl .lvlRow i { height: 8px; }
+html.phone .credit.foot { display: none; }
+html.phone #playBtn { position: fixed; right: 12px; bottom: 8px; width: min(36vw, 300px); min-height: 50px; padding: 8px; z-index: 30; font-size: 20px; letter-spacing: 2px; box-shadow: 0 8px 28px rgba(0, 0, 0, .65); }
+html.phone #playBtn + .ghostbtn { position: fixed; right: calc(12px + min(36vw, 300px) + 8px); bottom: 8px; min-height: 50px; z-index: 30; padding: 0 14px; font-size: 13px; }
+html.phone .card, html.phone .seg button { -webkit-tap-highlight-color: transparent; }
+html.phone button { min-height: 34px; }
+html.phone .skingrid, html.phone .shopgrid { gap: 6px; max-height: none; flex: none; overflow: visible; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }       /* (an explicit min-height on the cards let the grid squash them) */
+html.phone .skin { padding: 5px; } html.phone .skin .sw { height: 78px; } html.phone .skin .nm { font-size: 12px; margin-top: 3px; } html.phone .skin .rar { font-size: 10px; }
+html.phone .settings { max-height: none; } html.phone .row { padding: 6px 0; gap: 8px; } html.phone .row label { font-size: 13px; }
+html.phone .ctl input[type=range] { width: 110px; }
+html.phone #installBar { bottom: auto; top: 46px; width: min(560px, 80vw); padding: 6px 10px; font-size: 11px; }
+html.phone #installBar button { padding: 6px 10px; font-size: 11px; min-height: 30px; }
+html.phone .ctlwrap { grid-template-columns: repeat(2, minmax(150px, 1fr)); max-height: none; }
+html.phone .ctlwrap.one { grid-template-columns: minmax(0, 1fr); }                                  /* only the touch column: a single wide card, its rows in two columns */
+html.phone .ctlwrap.one .card.ctl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 22px; align-content: start; }
+html.phone .ctlwrap.one .card.ctl h3, html.phone .ctlwrap.one .card.ctl p { grid-column: 1 / -1; }
+html.phone .ctl .krow { padding: 3px 0; }
+html.phone .logo .lt { display: none; }
+
+/* ---------- in the match ----------
+   Drawn for a screen 820 x 390 and scaled by --k (Device.scale in settings.js). Top: the buttons on the left, the pills in the middle, the grenade / shield / heal buttons and the minimap on the right.
+   Bottom: health and shield on the left, the weapon boxes (tappable) with the ammo and the items above them in the middle, the right thumb's buttons in the corner (input.js buildTouch). The left half stays free for the stick. */
+html.phone #topbar { top: calc(6px * var(--k, 1)); left: 50%; transform: translateX(-50%) scale(calc(.8 * var(--k, 1))); transform-origin: top center; }
+html.phone #minimap { top: calc(6px * var(--k, 1)); right: calc(6px * var(--k, 1)); width: calc(104px * var(--k, 1)) !important; height: calc(104px * var(--k, 1)) !important; border-width: 2px; }
+html.phone #killfeed { top: calc(116px * var(--k, 1)); right: calc(6px * var(--k, 1)); transform: scale(calc(.75 * var(--k, 1))); transform-origin: top right; }
+html.phone #compass, html.phone #fps { display: none; }
+html.phone #bottom { display: block; padding: 0; bottom: 0; height: 0; }
+html.phone #bars { position: absolute; left: calc(10px * var(--k, 1)); bottom: calc(8px * var(--k, 1)); width: calc(176px * var(--k, 1)); gap: 3px; }
+html.phone #bars .bar { height: calc(15px * var(--k, 1)); } html.phone #bars .bar span { font-size: calc(11px * var(--k, 1)); }
+html.phone #slots { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(8px * var(--k, 1)); gap: calc(4px * var(--k, 1)); }
+html.phone #slots .slot { width: calc(54px * var(--k, 1)); height: calc(38px * var(--k, 1)); font-size: calc(9px * var(--k, 1)); padding: 2px; border-width: 2px; pointer-events: auto; touch-action: none; }
+html.phone #slots .slot i { font-size: calc(9px * var(--k, 1)); left: 4px; top: 1px; }
+html.phone #ammoBox { bottom: calc(52px * var(--k, 1)); min-width: 0; font-size: calc(24px * var(--k, 1)); }
+html.phone #ammoRes { font-size: calc(13px * var(--k, 1)); } html.phone #ammoMeta { font-size: calc(9px * var(--k, 1)); margin-top: -2px; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
+html.phone #consum { margin-top: 2px; gap: calc(4px * var(--k, 1)); }
+html.phone #consum .it { width: calc(38px * var(--k, 1)); height: calc(38px * var(--k, 1)); border-radius: 8px; border-width: 2px; touch-action: none; }
+html.phone #consum .it.empty { display: none; }                                                   /* only what can be used is shown: fewer things on the screen */
+body.touch #minimap { pointer-events: auto; }                                                      /* a tap on the minimap opens the big map (hud.js) */
+html.phone #consum .it i { width: calc(16px * var(--k, 1)); height: calc(16px * var(--k, 1)); } html.phone #consum .it b { font-size: calc(10px * var(--k, 1)); } html.phone #consum .it kbd { display: none; }
+html.phone #vehicleHud { right: auto; left: calc(14px * var(--k, 1)); bottom: calc(32px * var(--k, 1)); font-size: calc(32px * var(--k, 1)); } html.phone #vehicleHud small { font-size: calc(11px * var(--k, 1)); }
+html.phone #prompt { bottom: 34%; font-size: 14px; }
+html.phone #banner { font-size: 18px; max-width: 70vw; }
+html.phone .trick { font-size: clamp(18px, 5vw, 30px); }
+html.phone #tutBox { top: calc(38px * var(--k, 1)); left: 50%; right: auto; transform: translateX(-50%); width: min(380px, 46vw); font-size: 11px; padding: 8px 12px; }          /* top centre: between the menu tray and the minimap, clear of every thumb button */
+html.phone #tutBox b { font-size: 14px; margin: 1px 0; } html.phone #tutBox span { font-size: 12px; line-height: 1.3; } html.phone #tutBox em { margin-top: 4px; }
+html.phone .tb.joy { width: calc(112px * var(--k, 1)); height: calc(112px * var(--k, 1)); }
+
+/* tablets keep the normal layout and get a full screen button */

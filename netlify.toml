@@ -1,0 +1,56 @@
+# Netlify: the game is plain files, there is nothing to build; the whole folder is published as it is.
+# The headers keep the files that carry a new version (index.html, sw.js, version.json, the scripts) always fresh, so that an installed copy finds the update at once,
+# and let the big model / texture / sky files be cached for a week (their addresses carry ?v=<assets code>, which changes when they do). The same rules are in the file _headers (used by drag-and-drop deploys).
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/version.json"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Type = "application/manifest+json"
+
+[[headers]]
+  for = "/src/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/models/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/sky/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/tex/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/models.json"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

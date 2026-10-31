@@ -18,8 +18,8 @@
 
   const skinCard = (sk, onClick, owned, price) => {
     const col = rcol(sk.rarity), swatch = sk.camo ? `linear-gradient(135deg, ${sk.camo.slice(0, 4).map((c, i) => hex(c) + ' ' + (i * 25) + '%').join(',')})` : `linear-gradient(135deg, ${hex(sk.cloth)}, ${hex(sk.gear)})`;
-    const c = h('div', 'skin' + (sk.rarity >= 6 ? ' ultra' : '') + (owned ? '' : ' lockd'), `<div class="sw" style="background:${swatch}">${sk.glow ? `<i style="background:${hex(sk.glow)}"></i>` : ''}</div><div class="nm">${sk.name}</div><div class="rar" style="color:${col}">${RARITY[Math.min(sk.rarity, 6)].name}</div>${owned ? '' : `<div class="price"><i></i>${I18n.n(price)}</div>`}`);
-    c.style.setProperty('--rc', col); c.onclick = onClick; return c;
+    const c = h('div', 'skin' + (sk.rarity >= 6 ? ' ultra' : '') + (owned ? '' : ' lockd'), `<div class="sw" style="background:${swatch}"><img class="th" alt="">${sk.glow ? `<i style="background:${hex(sk.glow)}"></i>` : ''}</div><div class="nm">${sk.name}</div><div class="rar" style="color:${col}">${RARITY[Math.min(sk.rarity, 6)].name}</div>${owned ? '' : `<div class="price"><i></i>${I18n.n(price)}</div>`}`);
+    c.style.setProperty('--rc', col); c.onclick = onClick; Thumbs.attach(sk.id, c.querySelector('img.th')); return c;
   };
 
   // ---------- locker ----------
@@ -83,7 +83,8 @@
       for (const sk of list) {
         const own = Profile.owns('skin', sk.id), price = Profile.skinPrice(sk);
         if (sk.rarity >= 6) {
-          const hero = h('div', 'ultracard', `<div class="ushine"></div><b>${sk.name}</b><small>${T('shop.ultraDesc')}</small><em>${T('shop.ultraPts')}</em>`);
+          const hero = h('div', 'ultracard', `<div class="ushine"></div><img class="th" alt=""><b>${sk.name}</b><small>${T('shop.ultraDesc')}</small><em>${T('shop.ultraPts')}</em>`);
+          Thumbs.attach(sk.id, hero.querySelector('img.th'));
           hero.onclick = () => { Menu.previewId = sk.id; Menu.rebuildRig(); }; hero.appendChild(buyBtn(price, () => doBuy('skin', sk.id, price, rebuild), own)); if (!own) hero.appendChild(h('small', 'req', T('shop.ultraReq'))); grid.appendChild(hero); continue;
         }
         const c = skinCard(sk, () => { Menu.previewId = sk.id; Menu.rebuildRig(); Sound.ui(); }, true, price);
@@ -94,7 +95,8 @@
       for (const slot of CATALOG.equipSlots) for (let t = 1; t <= 5; t++) {
         const id = String(t), own = Profile.owns(slot, id), price = CATALOG.tierPrice[t - 1];
         const c = h('div', 'shopItem', `<div class="ico gear-${slot}"></div><div class="nm">${T('equip.' + slot)} · ${RARITY[t - 1].name}</div><div class="rar" style="color:${rcol(t - 1)}">${effectText(slot, t)}</div>`);
-        c.style.setProperty('--rc', rcol(t - 1)); c.appendChild(buyBtn(price, () => doBuy(slot, id, price, rebuild), own)); grid.appendChild(c);
+        c.style.setProperty('--rc', rcol(t - 1)); c.onclick = () => { Menu.tryOn = { [slot]: t }; Menu.rebuildRig(); Sound.ui(); };          // a tap shows the piece on the character before it is bought
+        c.appendChild(buyBtn(price, () => doBuy(slot, id, price, () => { if (t > (Profile.d.loadout[slot] || 0)) Profile.equip(slot, t); Menu.tryOn = null; Menu.rebuildRig(); rebuild(); }), own)); grid.appendChild(c);          // a better piece is put on at once
       }
     } else if (Menu.shopTab === 'weapons') {
       for (const s of CATALOG.starters) {

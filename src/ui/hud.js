@@ -14,13 +14,18 @@ const HUD = {
       'prompt', 'banner', 'useBar', 'useFill', 'useTxt', 'vehicleHud', 'speedTxt', 'fps', 'slots', 'ammoMag', 'ammoRes', 'ammoMeta', 'consum', 'shieldFill', 'shieldTxt', 'healthFill', 'healthTxt', 'tutBox', 'hidden', 'steerHint', 'under']) this.el[id] = document.getElementById(id);
     this.mctx = this.el.minimap.getContext('2d');
     this.buildItems();
-    for (let i = 0; i < 5; i++) { const d = document.createElement('div'); d.className = 'slot'; this.el.slots.appendChild(d); }
+    for (let i = 0; i < 5; i++) {
+      const d = document.createElement('div'); d.className = 'slot'; this.el.slots.appendChild(d);
+      d.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); Input.press('slot' + (i + 1)); });          // a tap on a weapon box takes the weapon (touch screens: the boxes are the slot buttons)
+    }
     for (const [n, a] of [['N', 0], ['NE', 45], ['E', 90], ['SE', 135], ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]]) {
       const s = document.createElement('span'); s.textContent = n; s.dataset.a = a; if (!n.includes('N') || n === 'N') s.className = n.length === 1 ? 'main' : ''; this.el.compassStrip.appendChild(s); this.compassLabels.push(s);
     }
     this.big = document.createElement('div'); this.big.id = 'bigmap'; this.big.className = 'hidden';
     this.big.innerHTML = '<canvas width="720" height="720"></canvas><div class="cap" data-i18n="hud.closeMap">Close map</div>'; document.body.appendChild(this.big); I18n.apply(this.big);
     this.bctx = this.big.querySelector('canvas').getContext('2d');
+    this.big.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' || Input.device === 'touch') { e.preventDefault(); e.stopPropagation(); this.toggleBig(); } });          // a tap closes the big map (touch screens have no M key)
+    this.el.minimap.addEventListener('pointerdown', e => { if (Input.device === 'touch') { e.preventDefault(); e.stopPropagation(); this.toggleBig(); } });                              // a tap on the minimap opens it
     document.addEventListener('keydown', e => { if (e.code === 'KeyM' && G.state === 'playing' && !e.repeat) this.toggleBig(); });
     this.buildMapImage();
   },
@@ -76,7 +81,7 @@ const HUD = {
   },
 
   show(v) { this.el.hud.classList.toggle('hidden', !v); if (!v) { this.big.classList.add('hidden'); this.bigOn = false; } },
-  toggleBig() { this.bigOn = !this.bigOn; this.big.classList.toggle('hidden', !this.bigOn); },
+  toggleBig() { this.bigOn = !this.bigOn; this.big.classList.toggle('hidden', !this.bigOn); if (this.bigOn) this.big.querySelector('.cap').textContent = I18n.t(Input.device === 'touch' ? 'hud.closeMapTouch' : 'hud.closeMap'); },
 
   banner(text, dur) {
     const b = this.el.banner; clearTimeout(this.bannerT);
@@ -93,6 +98,16 @@ const HUD = {
     host.appendChild(d); requestAnimationFrame(() => d.classList.add('on'));
     while (host.children.length > 4) host.removeChild(host.firstChild);
     setTimeout(() => { d.classList.remove('on'); setTimeout(() => d.remove(), 400); }, 4200);
+  },
+
+  // bike trick text in the middle of the screen (bad = a bail, in red)
+  trick(text, bad) {
+    const host = this.el.hud; if (!host) return;
+    host.querySelectorAll('.trick').forEach(e => e.remove());                                 // a new callout replaces the old one instead of piling up on it
+    const d = document.createElement('div'); d.className = 'trick' + (bad ? ' bad' : ''); d.textContent = text; host.appendChild(d);
+    requestAnimationFrame(() => d.classList.add('on'));
+    setTimeout(() => d.classList.add('out'), 1500); setTimeout(() => d.remove(), 2100);
+    if (!bad) Sound.kill();
   },
 
   prompt(text, color) {
@@ -192,6 +207,12 @@ const HUD = {
       const gap = clamp(Math.atan(spread) * pxPerRad * 0.9, 3, 90) * (P.sprinting ? 1.3 : 1);
       e.crosshair.style.setProperty('--gap', gap.toFixed(1) + 'px');
     }
+    // Phantom-X: a ring on the enemy it has locked on to
+    const lr = this.lockRing || (this.lockRing = (() => { const r = document.createElement('div'); r.id = 'lockRing'; r.innerHTML = '<i></i>'; e.hud.appendChild(r); return r; })());
+    if (P.lockT && P.alive && !P.scoped) {
+      const a = P.lockT.a, hp = this._lp || (this._lp = new THREE.Vector3()); hp.set(a.pos.x, a.pos.y + (a.riding ? 1.3 : a.crouch ? 1.12 : 1.6), a.pos.z).project(G.camera);
+      if (hp.z < 1) { lr.style.display = 'block'; lr.style.transform = `translate(${((hp.x * 0.5 + 0.5) * innerWidth).toFixed(1)}px, ${((-hp.y * 0.5 + 0.5) * innerHeight).toFixed(1)}px)`; } else lr.style.display = 'none';
+    } else lr.style.display = 'none';
     this.set('veh', e.speedTxt, P.riding && P.bike ? Math.round(Math.abs(P.bike.speed) * 3.6) : '');
     e.vehicleHud.style.display = P.riding ? 'block' : 'none';
     if (Settings.get('showFps')) { e.fps.style.display = 'block'; this.set('fps', e.fps, `${G.fps || 0} FPS · ${G.drawScale ? Math.round(G.drawScale * 100) + '%' : ''}`); } else e.fps.style.display = 'none';

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev lobby</title>
+<style>
+  body { font: 14px/1.45 Segoe UI, Arial, sans-serif; background: #0b1020; color: #dbe3e9; margin: 16px; }
+  h1 { font-size: 18px; margin: 0 0 6px; color: #f3c64a; } p { margin: 4px 0 10px; color: #9fb0c0; }
+  table { border-collapse: collapse; margin: 6px 0 14px; } td, th { padding: 3px 12px 3px 0; text-align: left; border-bottom: 1px solid #1d2744; }
+  #log { white-space: pre-wrap; font: 12px/1.4 Consolas, monospace; color: #9fb0c0; max-height: 40vh; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>Dev lobby</h1>
+<p>Stands in for the Cloudflare worker (server/worker.js) while testing: the game tabs of this browser talk to it over a BroadcastChannel (open the game with <code>?mm=local</code>).
+Keep this tab open. <code>?fast=1</code> shortens the waits (battle royale starts with 2 players after 3 s, a duel waits 10 s for a partner).</p>
+<div id="stat"></div>
+<table id="q"><thead><tr><th>id</th><th>name</th><th>mode</th><th>level</th><th>host score</th><th>waiting</th></tr></thead><tbody></tbody></table>
+<div id="log"></div>
+<script src="matchmaker.js"></script>
+<script>
+  const fast = /[?&]fast=1/.test(location.search);
+  const mm = new Matchmaker(fast ? { br: { size: 20, minStart: 2, grace: 3000, wait: 10000 }, duel: { size: 2, wait: 10000 } } : {});
+  const bc = new BroadcastChannel('lss-lobby'), log = document.getElementById('log'); let matches = 0;
+  const say = s => { log.textContent = new Date().toLocaleTimeString() + '  ' + s + '\n' + log.textContent.slice(0, 6000); };
+  bc.onmessage = e => {
+    const d = e.data; if (!d || !d.from || !d.msg) return; const m = d.msg;
+    if (m.t === 'q') { mm.enqueue(Object.assign({}, m, { id: d.from }), Date.now()); say('+ ' + d.from + ' (' + m.mode + ', level ' + m.r + ')'); pump(); }          // (answered at once: a hidden tab runs its timers slowly)
+    else if (m.t === 'c') { mm.cancel(d.from); say('- ' + d.from + ' cancelled'); }
+  };
+  setInterval(() => pump(), 1000);
+  function pump() {
+    const out = mm.tick(Date.now());
+    for (const ev of out) { bc.postMessage({ to: ev.to, msg: ev.msg }); if (ev.msg.t === 'm' && ev.msg.role === 'host') { matches++; say('MATCH ' + ev.msg.id + ' ' + ev.msg.mode + ': ' + ev.msg.members.map(x => x.u).join(', ') + ' + ' + ev.msg.bots + ' bots, host ' + ev.msg.host); } if (ev.msg.t === 'x') say('timeout for ' + ev.to); }
+    document.getElementById('stat').textContent = 'Waiting: ' + mm.tickets.size + ' · matches made: ' + matches + (fast ? ' · fast waits' : '');
+    const tb = document.querySelector('#q tbody'); tb.innerHTML = '';
+    for (const t of mm.tickets.values()) { const tr = document.createElement('tr'); tr.innerHTML = '<td>' + t.id + '</td><td>' + t.n + '</td><td>' + t.mode + '</td><td>' + t.r + '</td><td>' + t.hs + '</td><td>' + Math.floor((Date.now() - t.t0) / 1000) + ' s</td>'; tb.appendChild(tr); }
+  }
+</script>
+</body>
+</html>

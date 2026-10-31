@@ -60,7 +60,7 @@ const Player = {
 
   buildRig() {
     if (this.rig) G.scene.remove(this.rig.root);
-    this.rig = Character.build(Settings.get('skin'), 0);
+    this.rig = Character.build(Settings.get('skin'), 0, { loadout: this.fair ? null : Profile.d.loadout });          // the equipment from the shop is worn on the body (not in the fair-play modes: there it has no effect)
     this.rig.root.visible = false;
     G.scene.add(this.rig.root);
     this.rigGunKey = '';
@@ -226,7 +226,8 @@ const Player = {
     FX.shakeOffset(_shake);
     if (this.tppNow) {
       const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion), right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion);
-      const dist = this.riding ? 4.3 : this.aimT > 0.3 ? 1.9 : 2.7, side = this.riding ? 0 : this.aimT > 0.3 ? 0.55 : 0.5;
+      const ck = (this.rig && this.rig.camK) || 1;                                              // big-headed skeletal characters need the camera a bit further out and more to the side
+      const dist = (this.riding ? 4.3 : this.aimT > 0.3 ? 1.9 : 2.7) * ck, side = (this.riding ? 0 : this.aimT > 0.3 ? 0.55 : 0.5) * (1 + (ck - 1) * 1.6);
       const head = eye.clone(); head.y += 0.1;
       const want = head.clone().addScaledVector(fwd, -dist).addScaledVector(right, side).add(new THREE.Vector3(0, 0.12, 0));
       const dir = want.clone().sub(head), len = dir.length(); dir.normalize();
@@ -256,9 +257,11 @@ const Player = {
     if (key !== this.rigGunKey) { this.rigGunKey = key; r.setGun(w ? GM.build(w.id, w.rarity, w.sight) : null, w ? WEAPONS[w.id].hold : 'rifle'); }
     r.root.visible = this.tppNow || (this.phase === 'plane' ? false : false);
     if (!r.root.visible) return;
-    r.root.position.copy(this.pos); r.root.rotation.y = this.yaw;
+    if (this.riding && this.bike) this.bike.attachRider(r.root);                                    // on a bike the body is part of the bike
+    else { if (r.root.parent !== G.scene) G.scene.add(r.root); r.root.position.copy(this.pos); r.root.rotation.y = this.yaw; }
+    const md = Character.moveDir(this.vel.x, this.vel.z, this.yaw, this.speed || 0);
     r.update(dt, {
-      speed: this.phase === 'ground' ? this.speed : 0, fwd: 1, crouch: this.crouch, raise: this.aimT > 0.3 || G.time - this.lastFireT < 1.2 ? 1 : 0, sprint: this.sprinting,
+      speed: this.phase === 'ground' ? this.speed : 0, fwd: md.dirz < -0.3 ? -1 : 1, dirx: md.dirx, dirz: md.dirz, swim: this.swimming, crouch: this.crouch, raise: this.aimT > 0.3 || G.time - this.lastFireT < 1.2 ? 1 : 0, sprint: this.sprinting,
       pitch: this.pitch, slide: this.sliding > 0, air: !this.onGround && this.phase === 'ground', ride: this.riding, dead: !this.alive,
       reload: this.reloadT > 0 ? 1 - this.reloadT / this.reloadTotal : 0, drop: this.phase === 'freefall' ? 'free' : this.phase === 'glide' ? 'glide' : null, recoil: this.kick
     });

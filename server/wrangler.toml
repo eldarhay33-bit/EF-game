@@ -1,0 +1,16 @@
+# Cloudflare Workers configuration of the lobby server (see server/README.md). Free plan: the Durable Object must be SQLite-backed (new_sqlite_classes).
+name = "lss-lobby"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+# the pages that may use the lobby, comma separated (for example "https://my-game.netlify.app"); empty = any page
+ALLOWED_ORIGINS = ""
+
+[[durable_objects.bindings]]
+name = "LOBBY"
+class_name = "Lobby"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Lobby"]
